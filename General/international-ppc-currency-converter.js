@@ -4,9 +4,9 @@
  */
 
 function main() {
-  var originalCurrency = 'GBP'; //3 letter currency code for starting currency
-  var targetCurrency = 'USD'; //3 letter currency code for target currency
-  var customDate = '2019-05-01'; //Date of exchange rate in form 'yyyy-MM-dd'. Leave as blank string for current exchange rates. Dates for fixer.io are valid from 2000 onwards only
+  var originalCurrency = 'GBP'; // 3 letter currency code for starting currency
+  var targetCurrency = 'USD'; // 3 letter currency code for target currency
+  var customDate = '2019-05-01'; // Date of exchange rate in form 'yyyy-MM-dd'. Leave as blank string for current exchange rates. Dates for fixer.io are valid from 2000 onwards only
   var apiKey = ''; // Get an API Key from https://fixer.io/product
 
   var exchangeRate = GetExchangeRate(originalCurrency, targetCurrency, customDate, apiKey);
@@ -23,20 +23,20 @@ function GetExchangeRate(originalCurrency, targetCurrency, customDate, apiKey) {
   try {
     var jsonResponseString = UrlFetchApp.fetch(url).getContentText();
   } catch (err) {
-    var errorMessage = "Error has occurred. Unable to Access URL. Please check input parameters";
+    var errorMessage = 'Error has occurred. Unable to Access URL. Please check input parameters';
     Logger.log(errorMessage);
     return errorMessage;
   }
 
   var jsonResponseObject = JSON.parse(jsonResponseString);
-  var exchangeRates = jsonResponseObject['rates']
+  var exchangeRates = jsonResponseObject.rates;
 
   if (!(originalCurrency in exchangeRates)) {
-    throw originalCurrency + " not a valid currency";
+    throw originalCurrency + ' not a valid currency';
   }
 
   if (!(targetCurrency in exchangeRates)) {
-    throw targetCurrency + " not a valid currency";
+    throw targetCurrency + ' not a valid currency';
   }
 
   var exchangeRateToOriginalCurrency = exchangeRates[originalCurrency];

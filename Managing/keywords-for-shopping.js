@@ -8,16 +8,16 @@
  * Version: 1.0
  * Google AdWords Script maintained by brainlabsdigital.com
  *
- **/
+ */
 
 function main() {
   // Put your spreadsheet's URL here:
-  var spreadsheetUrl = "https://docs.google.com/YOUR-SPREADSHEET-URL-HERE";
+  var spreadsheetUrl = 'https://docs.google.com/YOUR-SPREADSHEET-URL-HERE';
   // Make sure the keywords are in columns A to C in the first sheet.
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  var dateRange = "YESTERDAY";
+  // ////////////////////////////////////////////////////////////////////////////
+  var dateRange = 'YESTERDAY';
   // By default the script just looks at yesterday's search queries.
 
   var impressionThreshold = 0;
@@ -29,7 +29,7 @@ function main() {
     var spreadsheet = SpreadsheetApp.openByUrl(spreadsheetUrl);
   } catch (e) {
     Logger.log("Problem with the spreadsheet URL: '" + e + "'");
-    Logger.log("Make sure you have correctly copied in your own spreadsheet URL.");
+    Logger.log('Make sure you have correctly copied in your own spreadsheet URL.');
     return;
   }
   var sheet = spreadsheet.getSheets()[0];
@@ -53,10 +53,10 @@ function main() {
       numberOfadGroups++;
     }
     var keyword = spreadsheetData[i][2];
-    keyword = keyword.toLowerCase().replace(/[^\w\s\d&]/g, " ").replace(/ +/g, " ").trim();
+    keyword = keyword.toLowerCase().replace(/[^\w\s\d&]/g, ' ').replace(/ +/g, ' ').trim();
     keywords[campaignName][adGroupName].push(keyword);
     numberOfKeywords++;
-    var keywordWords = keyword.split(" ");
+    var keywordWords = keyword.split(' ');
     for (var k = 0; k < keywordWords.length; k++) {
       if (keywordWords[k].length > 4) {
         words[campaignName][adGroupName][keywordWords[k]] = true;
@@ -64,34 +64,34 @@ function main() {
     }
   }
   var campaignNames = Object.keys(keywords);
-  Logger.log("Found " + numberOfKeywords + " keywords for " + numberOfadGroups + " ad groups in " + campaignNames.length + " campaign(s).");
+  Logger.log('Found ' + numberOfKeywords + ' keywords for ' + numberOfadGroups + ' ad groups in ' + campaignNames.length + ' campaign(s).');
 
   // Get the IDs of the ad groups named in the spreadsheet
   var adGroupIds = [];
   var campaignIds = [];
   var campaignReport = AdWordsApp.report(
-    "SELECT CampaignName, AdGroupName, CampaignId, AdGroupId " +
-    "FROM   ADGROUP_PERFORMANCE_REPORT " +
-    "WHERE Impressions > 0 " +
-    'AND CampaignName IN ["' + campaignNames.join('","') + '"] ' +
-    "DURING " + dateRange
+    'SELECT CampaignName, AdGroupName, CampaignId, AdGroupId '
+    + 'FROM   ADGROUP_PERFORMANCE_REPORT '
+    + 'WHERE Impressions > 0 '
+    + 'AND CampaignName IN ["' + campaignNames.join('","') + '"] '
+    + 'DURING ' + dateRange
   );
   var campaignRows = campaignReport.rows();
   while (campaignRows.hasNext()) {
     var row = campaignRows.next();
-    if (campaignIds.indexOf(row["CampaignId"]) < 0) {
-      campaignIds.push(row["CampaignId"]);
+    if (campaignIds.indexOf(row.CampaignId) < 0) {
+      campaignIds.push(row.CampaignId);
     }
-    if (keywords[row["CampaignName"]][row["AdGroupName"]] != undefined) {
-      adGroupIds.push(row["AdGroupId"]);
+    if (keywords[row.CampaignName][row.AdGroupName] != undefined) {
+      adGroupIds.push(row.AdGroupId);
     }
-  } //end while
+  } // end while
 
   if (adGroupIds.length == 0) {
-    Logger.log("Could not find any ad groups with impressions that matched the given names.");
+    Logger.log('Could not find any ad groups with impressions that matched the given names.');
     return;
   }
-  Logger.log("Found " + adGroupIds.length + " ad groups in " + campaignIds.length + " campaign(s) with impressions that matched the given names.");
+  Logger.log('Found ' + adGroupIds.length + ' ad groups in ' + campaignIds.length + ' campaign(s) with impressions that matched the given names.');
 
   // Initialise the arrays for each campaign, and sorts the keywords from longest to shortest
   var negativeQueries = {}; // Contains the queries
@@ -105,7 +105,7 @@ function main() {
       negativeQueries[campaignName][adGroupName] = [];
       exactNegatives[campaignName][adGroupName] = [];
       phraseNegatives[campaignName][adGroupName] = [];
-      keywords[campaignName][adGroupName].sort(function(a, b) {
+      keywords[campaignName][adGroupName].sort(function (a, b) {
         return b.length - a.length;
       });
     }
@@ -113,18 +113,19 @@ function main() {
 
   // Get the queries that don't exactly match keywords
   var report = AdWordsApp.report(
-    "SELECT Query, AdGroupId, CampaignId, CampaignName, AdGroupName, Impressions " +
-    "FROM SEARCH_QUERY_PERFORMANCE_REPORT " +
-    "WHERE AdGroupId IN [" + adGroupIds.join(",") + "] " +
-    "AND Impressions > " + impressionThreshold + " " +
-    "DURING " + dateRange);
+    'SELECT Query, AdGroupId, CampaignId, CampaignName, AdGroupName, Impressions '
+    + 'FROM SEARCH_QUERY_PERFORMANCE_REPORT '
+    + 'WHERE AdGroupId IN [' + adGroupIds.join(',') + '] '
+    + 'AND Impressions > ' + impressionThreshold + ' '
+    + 'DURING ' + dateRange
+  );
   var rows = report.rows();
   var numberQueries = 0;
   while (rows.hasNext()) {
     var row = rows.next();
-    var query = row["Query"].toLowerCase().replace(/[^\w\s\d&]/g, " ").replace(/ +/g, " ").trim();
-    var campaignName = row["CampaignName"];
-    var adGroupName = row["AdGroupName"];
+    var query = row.Query.toLowerCase().replace(/[^\w\s\d&]/g, ' ').replace(/ +/g, ' ').trim();
+    var campaignName = row.CampaignName;
+    var adGroupName = row.AdGroupName;
     if (keywords[campaignName][adGroupName].indexOf(query) < 0) {
       negativeQueries[campaignName][adGroupName].push(query);
       numberQueries++;
@@ -132,7 +133,7 @@ function main() {
   }
 
   // Process queries
-  Logger.log("Processing " + numberQueries + " queries that do not match any keywords.");
+  Logger.log('Processing ' + numberQueries + ' queries that do not match any keywords.');
   var numberExactNegatives = 0;
   var numberPotentialPhraseNegatives = 0;
   for (var campaignName in negativeQueries) {
@@ -150,7 +151,7 @@ function main() {
 
         // Check each word (that's over 4 characters) in the query - if it's not in the words array
         // then it isn't in the keywords, so it's fine to use as a phrase negative
-        var queryWords = query.split(" ");
+        var queryWords = query.split(' ');
         for (var w = 0; w < queryWords.length; w++) {
           if (queryWords[w].length > 4) {
             if (words[campaignName][adGroupName][queryWords[w]] == undefined) {
@@ -165,8 +166,8 @@ function main() {
         // or after the keyword could be used as a phrase negative.
         for (var k = 0; k < keywords[campaignName][adGroupName].length && !queryDone; k++) {
           var keyword = keywords[campaignName][adGroupName][k];
-          if ((" " + query + " ").indexOf(" " + keyword + " ") > -1) {
-            var queryBits = (" " + query + " ").split(" " + keyword + " ");
+          if ((' ' + query + ' ').indexOf(' ' + keyword + ' ') > -1) {
+            var queryBits = (' ' + query + ' ').split(' ' + keyword + ' ');
             queryBits[0] = queryBits[0].trim();
             queryBits[1] = queryBits[1].trim();
             if (queryBits[0].length > 0 && !isStringInsideKeywords(queryBits[0], keywords[campaignName][adGroupName])) {
@@ -190,24 +191,24 @@ function main() {
       }
     }
   }
-  Logger.log("Found " + numberPotentialPhraseNegatives + " potential phrase match negatives and " + numberExactNegatives + " exact match negatives.");
+  Logger.log('Found ' + numberPotentialPhraseNegatives + ' potential phrase match negatives and ' + numberExactNegatives + ' exact match negatives.');
 
   // Remove any redundant phrase negatives
-  Logger.log("Checking for redundant negatives.");
+  Logger.log('Checking for redundant negatives.');
   var numberPhraseNegatives = 0;
   for (var campaignName in negativeQueries) {
     for (var adGroupName in negativeQueries[campaignName]) {
       // Order the phrases from shortest to longest
-      phraseNegatives[campaignName][adGroupName].sort(function(a, b) {
+      phraseNegatives[campaignName][adGroupName].sort(function (a, b) {
         return a.length - b.length;
       });
 
       for (var i = 0; i < phraseNegatives[campaignName][adGroupName].length; i++) {
-        var shorterPhrase = " " + phraseNegatives[campaignName][adGroupName][i] + " ";
+        var shorterPhrase = ' ' + phraseNegatives[campaignName][adGroupName][i] + ' ';
 
         // As the array is now ordered, any phrase negatives with higher indices must be longer than shorterPhrase
         for (var j = i + 1; j < phraseNegatives[campaignName][adGroupName].length; j++) {
-          var longerPhrase = " " + phraseNegatives[campaignName][adGroupName][j] + " ";
+          var longerPhrase = ' ' + phraseNegatives[campaignName][adGroupName][j] + ' ';
 
           // If the shorterPhrase is within the longerPhrase, then the longerPhrase is redundant
           // so it is removed from the array. This also means duplicates are removed.
@@ -220,12 +221,12 @@ function main() {
       numberPhraseNegatives += phraseNegatives[campaignName][adGroupName].length;
     }
   }
-  Logger.log("Going to create " + numberPhraseNegatives + " phrase match negatives and " + numberExactNegatives + " exact match negatives");
+  Logger.log('Going to create ' + numberPhraseNegatives + ' phrase match negatives and ' + numberExactNegatives + ' exact match negatives');
 
   // Iterate through the Shopping ad groups and add the negative keywords
   var groupIterator = AdWordsApp.shoppingAdGroups()
     .withIds(adGroupIds)
-    .get()
+    .get();
 
   while (groupIterator.hasNext()) {
     var adGroup = groupIterator.next();
@@ -233,7 +234,7 @@ function main() {
     var campaignName = adGroup.getCampaign().getName();
 
     for (var i = 0; i < exactNegatives[campaignName][adGroupName].length; i++) {
-      adGroup.createNegativeKeyword("[" + exactNegatives[campaignName][adGroupName][i] + "]");
+      adGroup.createNegativeKeyword('[' + exactNegatives[campaignName][adGroupName][i] + ']');
     }
 
     for (var i = 0; i < phraseNegatives[campaignName][adGroupName].length; i++) {
@@ -241,15 +242,15 @@ function main() {
     }
   }
 
-  Logger.log("Finished.");
+  Logger.log('Finished.');
 } // end main function
 
 
 // Check if a word is a substring of any strings in the keywords array
 function isStringInsideKeywords(word, keywords) {
   for (var k = 0; k < keywords.length; k++) {
-    var keyword = " " + keywords[k] + " ";
-    if (keyword.indexOf(" " + word + " ") > -1) {
+    var keyword = ' ' + keywords[k] + ' ';
+    if (keyword.indexOf(' ' + word + ' ') > -1) {
       return true;
     }
   }
