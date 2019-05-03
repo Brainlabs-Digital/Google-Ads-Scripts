@@ -2,8 +2,12 @@
 
 ## advanced-ad-scheduling.js
 
-Blog Post: <https://www.brainlabsdigital.com/247-bidding/>
+This script will enable you to bid far more flexibly – literally any minute of any day on any device. Imagine the savings! Imagine the improvement to performance. Can’t believe we’re giving this one away to be honest. But, I guess we’re just like that.
+
+Blog Post: [24/7 Bidding](https://www.brainlabsdigital.com/247-bidding/)
 
 ## average-position-bidding.js
 
-Blog Post: <https://www.brainlabsdigital.com/real-time-position-bidding/>
+Being able to appear top in the SERP can make all the difference to the success of a campaign, especially when you’re able to anticipate periods of higher competition. Sometimes it can also help to appear lower, depending on your objectives. This script lets you do that!
+
+Blog Post: [Real Time Position Bidding](https://www.brainlabsdigital.com/real-time-position-bidding/)
