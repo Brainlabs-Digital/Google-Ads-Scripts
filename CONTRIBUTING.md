@@ -8,15 +8,15 @@ We would love to hear your script ideas! If you would like to share one please [
 
 ## Issues
 
-The PPC world changes quickly. Some of our scripts might become obsolete over time (we're all sad to see the end of our [Average Position Bidding Script](Bidding/average-position-bidding.js)).
+The PPC world changes quickly. Some of our scripts might become obsolete over time (we are all sad to see the end of our [Average Position Bidding Script](Bidding/average-position-bidding.js)).
 
-If you spot anything out of date, please [create an issue](https://help.github.com/en/articles/creating-an-issue). From there we will investigate and come up with a course of action. We can't promise we'll be able to fix the issue but we will support you contributing to this repo. Please follow the contribution instructions below.
+If you spot anything out of date, please [create an issue](https://help.github.com/en/articles/creating-an-issue). From there we will investigate and come up with a course of action. We can't promise we'll be able to fix the issue but we will support you contributing to this repository. Please follow the contribution instructions below.
 
 ## Contributions
 
-If you have an improvement to this repo we would be very happy to hear from you. Please can you follow this workflow:
+If you have an improvement to this repository we would be very happy to hear from you. Please can you follow this workflow:
 
-1.  Fork the repo.
+1.  Fork the repository.
 2.  Make the changes.
-3.  Create a Pull Request into the `master` branch of this repo.
+3.  Create a Pull Request into the `master` branch of this repository.
 4.  When the Pull Request is approved by a maintainer, they will merge in your changes.

@@ -4,8 +4,8 @@ Welcome to the home of [Brainlabs](https://www.brainlabsdigital.com/) Scripts! W
 
 We love two things about open-sourcing our scripts:
 
-1.  We give you the tools to become PPC superheroes!
-2.  We get feedback on our scripts in order to improve them!
+1.  We give you the tools to become PPC superheroes.
+2.  We get feedback on our scripts in order to improve them.
 
 Before diving in, we recommend reading this introduction to [why Google Ads scripts are awesome](https://www.brainlabsdigital.com/why-scripts-are-awesome/) and how to use them.
 
