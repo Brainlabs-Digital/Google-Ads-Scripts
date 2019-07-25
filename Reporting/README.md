@@ -20,6 +20,12 @@ Blog Post: [Auction Insights](https://www.brainlabsdigital.com/auction-insights/
 
 [Template Spreadsheet](https://docs.google.com/spreadsheets/d/1flR87c-_OD5i5e8pkbIBKLTffXp5oYyPE4aDuj60IFM/copy)
 
+## bid-strategy-monitor.js
+
+This script lets you monitor the performance of various bidding strategies. You input the account ID and campaigns to monitor for a given bidding strategy, and it will give you a report on various metrics of your choice, such as CPC, Clicks, and Conversions.
+
+[Template Spreadsheet](https://docs.google.com/spreadsheets/d/1O7zhJ7pOen9L6sIw_v79QMF8oO_2q2J65MnWzYFUJQg/copy)
+
 ## heat-map-creation-tool-with-devices.js
 
 Knowing when to raise or lower bids is one thing. Being able to change bids as much as you like is another. This script lets you do both.
