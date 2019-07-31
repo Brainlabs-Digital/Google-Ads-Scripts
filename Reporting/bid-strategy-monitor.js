@@ -3,8 +3,8 @@
 *
 * Bid Strategy Performance Monitor
 *
-* This script allows Google Ads Manager Accounts to monitor the performance
-* of various bidding strategies on Child Accounts based on defined
+* This script allows Google Ads MCC Accounts to monitor the performance
+* of various bidding strategies on child accounts based on defined
 * metrics.
 *
 * Version: 1.0
