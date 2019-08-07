@@ -10,8 +10,8 @@
  * of the day and the other days of the week with schedules with no modifier as a
  * fail safe.
  *
- * Version: 3.2
- * Updated to allow -100% bids, change mobile adjustments and create fail safes.
+ * Version: 3.3
+ * Updated 2019-08-07 to fix bug with shopping campaigns
  * brainlabsdigital.com
  *
  */
@@ -149,7 +149,7 @@ function main() {
 
   // Remove all ad scheduling for the last run.
   if (lastRun) {
-    checkAndRemoveAdSchedules(campaignIds, []);
+    checkAndRemoveAdSchedules(campaignIds, [], shoppingCampaigns);
     return;
   }
 
@@ -179,7 +179,7 @@ function main() {
   }
 
   // Check the existing ad schedules, removing those no longer necessary
-  var existingSchedules = checkAndRemoveAdSchedules(campaignIds, timesAndModifiers);
+  var existingSchedules = checkAndRemoveAdSchedules(campaignIds, timesAndModifiers, shoppingCampaigns);
 
   // Add in the new ad schedules
   AddHourlyAdSchedules(campaignIds, timesAndModifiers, existingSchedules, shoppingCampaigns);
@@ -230,9 +230,10 @@ function AddHourlyAdSchedules(campaignIds, timesAndModifiers, existingSchedules,
  *
  * @param array campaignIds array of campaign IDs to remove ad scheduling from
  * @param array timesAndModifiers array of [hour, day, bid modifier] of the wanted schedules
+ * @param bool shoppingCampaigns true if running on Shopping campaigns, false if Search/Display
  * @return array existingWantedSchedules array of strings identifying the existing undeleted schedules
  */
-function checkAndRemoveAdSchedules(campaignIds, timesAndModifiers) {
+function checkAndRemoveAdSchedules(campaignIds, timesAndModifiers, shoppingCampaigns) {
   var adScheduleIds = [];
 
   var report = AdWordsApp.report(
@@ -278,7 +279,12 @@ function checkAndRemoveAdSchedules(campaignIds, timesAndModifiers) {
       var key = adSchedule.getStartHour() + '|' + adSchedule.getEndHour() + '|' + adSchedule.getDayOfWeek() + '|' + Utilities.formatString('%.2f', adSchedule.getBidModifier());
 
       if (wantedSchedules.indexOf(key) > -1) {
-        existingWantedSchedules.push(key + '|' + adSchedule.getCampaign().getId());
+        if (shoppingCampaigns) {
+          var campaign = adSchedule.getShoppingCampaign();
+        } else {
+          var campaign = adSchedule.getCampaign();
+        }
+        existingWantedSchedules.push(key + "|" + campaign.getId());
       } else {
         unwantedSchedules.push(adSchedule);
       }
