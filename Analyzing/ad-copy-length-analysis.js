@@ -43,7 +43,7 @@ function main() {
       return d.Clicks / d.Impressions;
     },
     CPA: function (d) {
-      return d.Conversions / d.Cost;
+      return d.Cost / d.Conversions;
     }
   };
 
