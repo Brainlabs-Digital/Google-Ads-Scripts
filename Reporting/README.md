@@ -32,6 +32,12 @@ Knowing when to raise or lower bids is one thing. Being able to change bids as m
 
 Blog Post: [Heat Maps](https://www.brainlabsdigital.com/heat-maps/)
 
+## minichecker.js
+
+A script performing various location targeting, keyword bid, and bid modifier checks on a Google Ads account.
+
+Blog Post: Unpublished
+
 ## search-query-mining-tool.js
 
 Some words, when you put them together, are awesome. Some are not. ‘Free bananas’ sounds good, ‘old bananas’ sounds bad. By appreciating words in the context of other words, we become better search query performance interpreters, and human beings. Use this script to build your ad groups or create your negatives based on phrases rather than individual words.
