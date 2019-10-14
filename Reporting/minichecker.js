@@ -182,11 +182,17 @@ function checkWorldwideTargeting(campaignIds) {
             .targeting()
             .targetedLocations()
             .get();
-
         if (!locationIterator.hasNext()) {
-            var issue = {};
-            issue[CAMPAIGN_NAME] = campaign.getName();
-            worldwideTargetingIssues.push(issue);
+            // check if using only radius targeting
+            var proximityIterator = campaign
+                .targeting()
+                .targetedProximities()
+                .get();
+            if (!proximityIterator.hasNext()) {
+                var issue = {};
+                issue[CAMPAIGN_NAME] = campaign.getName();
+                worldwideTargetingIssues.push(issue);
+            }
         }
     }
     return worldwideTargetingIssues;
