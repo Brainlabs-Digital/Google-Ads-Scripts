@@ -199,8 +199,10 @@ function checkWorldwideTargeting(campaignIds) {
 }
 
 function checkBidModifiers(campaignIds) {
+    var combinedIssues = [];
     if (!CHECK_BID_MODIFIERS) {
-        return [];
+        combinedIssues[COUNT] = 0;
+        return combinedIssues;
     }
 
     Logger.log("Checking Bid Modifiers");
@@ -212,7 +214,6 @@ function checkBidModifiers(campaignIds) {
 
     var allIssues = deviceIssues.concat(locationIssues, adScheduleIssues);
     var combinedIssuesObject = {};
-    var combinedIssues = [];
 
     for (var i in allIssues) {
         var issue = allIssues[i];
@@ -238,8 +239,10 @@ function checkBidModifiers(campaignIds) {
 }
 
 function checkKeywordBids(campaignIds) {
+    var dataToReport = [];
     if (!CHECK_KEYWORD_BIDS) {
-        return [];
+        dataToReport[COUNT] = 0;
+        return dataToReport;
     }
 
     Logger.log('Checking Keyword Bids');
@@ -293,9 +296,7 @@ function checkKeywordBids(campaignIds) {
         );
     }
 
-    var dataToReport = [];
-    dataToReport[COUNT] = 0
-
+    dataToReport[COUNT] = 0;
     for (var campaignName in rawData) {
         var adgroupInformation = rawData[campaignName];
         var highBidKeywords = [];
@@ -483,59 +484,56 @@ function sendSummaryEmail(worldwideTargetingResult, bidModifiersResult, keywords
 
     if (keywordsResult.length == 0) {
         html.push("<br>No keywords found above bid limit<br>")
-    }
+    } else {
+        html.push('<br><table width=750>',
+            "<tr bgcolor='#ddd'>",
+            "<th>Campaign</th>",
+            "<th>Keyword</th>",
+            "<th>Bid</th>",
+            "<th>Ad Group</th>",
+            '</tr>');
 
-    html.push('<br><table width=750>',
-        "<tr bgcolor='#ddd'>",
-        "<th>Campaign</th>",
-        "<th>Keyword</th>",
-        "<th>Bid</th>",
-        "<th>Ad Group</th>",
-        '</tr>');
-
-    for (var i = 0; i < keywordsResult.length; i++) {
-        var highBidKeywords = keywordsResult[i][HIGH_BID_KEYWORDS];
-        for (var j = 0; j < highBidKeywords.length; j++) {
-            html.push('<tr>',
-                "<td>" + keywordsResult[i][CAMPAIGN_NAME] + '</td>',
-                "<td style='text-align: center'>" + highBidKeywords[j]["Keyword"] + '</td>',
-                "<td style='text-align: center'>" + highBidKeywords[j]["Bid"] + '</td>',
-                "<td style='text-align: right'>" + highBidKeywords[j]["AdGroupName"] + '</td>',
-                '</tr>');
+        for (var i = 0; i < keywordsResult.length; i++) {
+            var highBidKeywords = keywordsResult[i][HIGH_BID_KEYWORDS];
+            for (var j = 0; j < highBidKeywords.length; j++) {
+                html.push('<tr>',
+                    "<td>" + keywordsResult[i][CAMPAIGN_NAME] + '</td>',
+                    "<td style='text-align: center'>" + highBidKeywords[j]["Keyword"] + '</td>',
+                    "<td style='text-align: center'>" + highBidKeywords[j]["Bid"] + '</td>',
+                    "<td style='text-align: right'>" + highBidKeywords[j]["AdGroupName"] + '</td>',
+                    '</tr>');
+            }
         }
+        html.push('</table><br>');
     }
-    html.push('</table><br>');
-
     html.push('<br><h2>Bid modifiers above limit:</h2>');
 
     if (bidModifiersResult.length == 0) {
         html.push("<br>No bid modifiers found above limit<br>")
-    }
+    } else {
+        html.push('<br><table width=600>',
+            "<tr bgcolor='#ddd'>",
+            "<th>Campaign</th>",
+            "<th>Criterion Type</th>",
+            "<th>Criterion</th>",
+            "<th>Limit</th>",
+            "<th>Bid Modifier</th>",
+            '</tr>');
 
-
-    html.push('<br><table width=600>',
-        "<tr bgcolor='#ddd'>",
-        "<th>Campaign</th>",
-        "<th>Criterion Type</th>",
-        "<th>Criterion</th>",
-        "<th>Limit</th>",
-        "<th>Bid Modifier</th>",
-        '</tr>');
-
-    for (var i = 0; i < bidModifiersResult.length; i++) {
-        var overSizedModifiers = bidModifiersResult[i][OVER_SIZED_MODIFIERS]
-        for (var j = 0; j < overSizedModifiers.length; j++) {
-            html.push('<tr>',
-                "<td>" + bidModifiersResult[i][CAMPAIGN_NAME] + '</td>',
-                "<td style='text-align: center'>" + overSizedModifiers[j]["CriterionType"] + '</td>',
-                "<td style='text-align: center'>" + overSizedModifiers[j]["Criterion"] + '</td>',
-                "<td style='text-align: center'>" + overSizedModifiers[j]["BidLimit"] + '</td>',
-                "<td style='text-align: right'>" + overSizedModifiers[j]["BidModifier"].toFixed(2) + '</td>',
-                '</tr>');
+        for (var i = 0; i < bidModifiersResult.length; i++) {
+            var overSizedModifiers = bidModifiersResult[i][OVER_SIZED_MODIFIERS]
+            for (var j = 0; j < overSizedModifiers.length; j++) {
+                html.push('<tr>',
+                    "<td>" + bidModifiersResult[i][CAMPAIGN_NAME] + '</td>',
+                    "<td style='text-align: center'>" + overSizedModifiers[j]["CriterionType"] + '</td>',
+                    "<td style='text-align: center'>" + overSizedModifiers[j]["Criterion"] + '</td>',
+                    "<td style='text-align: center'>" + overSizedModifiers[j]["BidLimit"] + '</td>',
+                    "<td style='text-align: right'>" + overSizedModifiers[j]["BidModifier"].toFixed(2) + '</td>',
+                    '</tr>');
+            }
         }
+        html.push('</table><br>');
     }
-    html.push('</table><br>');
-
     html.push('<br><h2>Campaigns with worldwide targeting:</h2>');
 
     if (worldwideTargetingResult.length == 0) {
