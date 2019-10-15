@@ -13,7 +13,7 @@
 *   scheduling bid modifiers to a user-set upper limit, reporting any modifiers
 *   that exceed this limit
 *
-* Version: 1.0
+* Version: 1.1
 * Google AdWords Script maintained on brainlabsdigital.com
 *
 **/
