@@ -36,7 +36,7 @@ Blog Post: [Heat Maps](https://www.brainlabsdigital.com/heat-maps/)
 
 As much as we might automate, we’re not robots. Even digital marketing superheroes make mistakes once in a while. But forgetting to apply location targeting or getting over-excited on the bid modifier front can get eye-wateringly expensive, fast. Feed this script your chosen upper limits for max CPC and bid modifiers, and it will pull a report detailing all the offending campaigns or keywords in your account. It will also show you instances of worldwide targeting to make sure you’re averting any Google Ads catastrophes.
 
-Blog Post: Unpublished
+Blog Post: [Minichecker](https://searchengineland.com/are-small-errors-like-worldwide-targeting-draining-your-budget-this-google-ads-script-can-help-323326)
 
 ## search-query-mining-tool.js
 

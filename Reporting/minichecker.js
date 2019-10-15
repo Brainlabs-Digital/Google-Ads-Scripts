@@ -183,7 +183,6 @@ function checkWorldwideTargeting(campaignIds) {
             .targetedLocations()
             .get();
         if (!locationIterator.hasNext()) {
-            // check if using only radius targeting
             var proximityIterator = campaign
                 .targeting()
                 .targetedProximities()
