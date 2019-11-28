@@ -18,6 +18,12 @@ If you’re a human being, you’ll be aware of the fact that humans make mistak
 
 Blog Post: [Check if you've screwed up your account](https://www.brainlabsdigital.com/check-if-youve-screwed-up-your-account/)
 
+## gmc-disapproval-checker.js
+
+This script emails you when the percentage of disapproved products in your feed has exceeded the limit you’ve set it, saving you the time and tediousness of manually vetting the Google Merchant Center.
+
+Blog Post: [Tired of manually checking for Google Merchant Center disapprovals? This script has you covered](https://searchengineland.com/tired-of-manually-checking-for-google-merchant-center-disapprovals-this-script-has-you-covered-325070)
+
 ## hourly-email-updates.js
 
 Even if you’re the best PPC account manager in the world, the search market is a rollercoaster of ups and downs. Within the space of an hour, there could be a surge in spend or a slump in search volume, and if you aren’t aware of these changes, you might miss out. This script will make you the Big Brother of Google Ads: there’ll be nothing that slips past your vigilant gaze. In a good way.
