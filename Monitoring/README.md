@@ -6,6 +6,8 @@ Basically it significantly lowers the chances of overspending, which is sometime
 
 Blog Post: [Control Google Ads Budget](https://www.brainlabsdigital.com/control-google-ads-budget/)
 
+## capacity-controller.js
+
 ## check-for-empty-ad-groups.js
 
 Empty ad groups are useless. Full ones are useful. This script will make sure all your ad groups have all the right ingredients to make them appear on the SERP: not just checking for empty groups, but also making sure ad copy is appropriate and keywords have been approved. Very helpful when you’re managing a large account!
