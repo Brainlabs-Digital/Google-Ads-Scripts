@@ -8,6 +8,8 @@ Blog Post: [Control Google Ads Budget](https://www.brainlabsdigital.com/control-
 
 ## capacity-controller.js
 
+While the idea of too many conversions might seem like a far-fetched fantasy to some advertisers, for others it can be a real nightmare. A load of conversions that you don’t have the resources to fulfil means overstretched staff and under-serviced customers. To add insult to injury, you’ll probably still be throwing money at PPC ads which drive more potential converters to your site. If only there were a way to stop your Google Ads account in its tracks when you’ve hit your conversion limit to fend off such an onslaught. As luck would have it, Capacity Controller will do exactly that. 
+
 ## check-for-empty-ad-groups.js
 
 Empty ad groups are useless. Full ones are useful. This script will make sure all your ad groups have all the right ingredients to make them appear on the SERP: not just checking for empty groups, but also making sure ad copy is appropriate and keywords have been approved. Very helpful when you’re managing a large account!
