@@ -32,6 +32,9 @@ var email = ['aa@example.com'];
 // Filters
 // These two variables store the product ID's that we want to filter by.
 // The ID's need to be in string format e.g. productIdToInclude = ["123"];
+// These are actually substrings of the productId so be careful not to use
+// strings which are not reasonably specific.
+
 var productIdToInclude = [];
 var productIdToExclude = [];
 
@@ -79,17 +82,17 @@ function main() {
   } while (pageToken);
 
   disapprovalPercentage = (numberDisapprovedProducts * 100) / totalProducts;
-  Logger.log(numberDisapprovedProducts + ' of ' + totalProducts 
-             + ' products in your account were disapproved - ' 
-             + disapprovalPercentage.toFixed(2) + '%')
+  Logger.log(numberDisapprovedProducts + ' of ' + totalProducts
+    + ' products in your account were disapproved - '
+    + disapprovalPercentage.toFixed(2) + '%')
 
   // If our threshold is exceeded then we assemble an email with details of the alert and send it to our contact emails.
   if (disapprovalPercentage >= threshold) {
 
     var subject = merchantId + ' GMC Disapproval Alert Email';
     var message = numberDisapprovedProducts + ' of ' + totalProducts
-        + ' products in your GMC (' + merchantId + ') were disapproved - '
-        + disapprovalPercentage.toFixed(2) + '%' + '\n';
+      + ' products in your GMC (' + merchantId + ') were disapproved - '
+      + disapprovalPercentage.toFixed(2) + '%' + '\n';
 
     MailApp.sendEmail(email.join(','), subject, message);
     Logger.log('Message to ' + email.join(',') + ' sent.');
@@ -97,25 +100,30 @@ function main() {
 }
 
 function checkFiltersDontContradict(productIdToInclude, productIdToExclude) {
-    if (productIdToInclude.length && productIdToExclude.length) {
-        for(var i in productIdToInclude) {
-            if(productIdToExclude.indexOf(productIdToInclude[i]) > -1) {
-                throw "Filters have shared values - can not include and exclude simultaneously";
-            }
-        }
-    } else {
-        return true;
+  if (productIdToInclude.length && productIdToExclude.length) {
+    for (var i in productIdToInclude) {
+      if (productIdToExclude.indexOf(productIdToInclude[i]) > -1) {
+        throw "Filters have shared values - can not include and exclude simultaneously";
+      }
     }
+  } else {
+    return true;
+  }
 }
 
 function satisfiesAllFilters(product) {
-  return (satisfiesIdIncludeFilters(productIdToInclude, product) 
-          && satisfiesIdExcludeFilters(productIdToExclude, product));
+  return (satisfiesIdIncludeFilters(productIdToInclude, product)
+    && satisfiesIdExcludeFilters(productIdToExclude, product));
 }
 
 function satisfiesIdIncludeFilters(productIdToInclude, product) {
-  if(productIdToInclude.length) {
-    return (productIdToInclude.indexOf(product['productId']) != -1);
+  if (productIdToInclude.length) {
+    for (index = 0; index < productIdToInclude.length; ++index) {
+      if (product['productId'].indexOf(productIdToInclude[index]) !== -1) {
+        return true;
+      }
+    }
+    return false;
   }
   else {
     return true;
@@ -123,8 +131,13 @@ function satisfiesIdIncludeFilters(productIdToInclude, product) {
 }
 
 function satisfiesIdExcludeFilters(productIdToExclude, product) {
-  if(productIdToExclude.length) {
-      return (productIdToExclude.indexOf(product['productId']) == -1);
+  if (productIdToExclude.length) {
+    for (index = 0; index < productIdToExclude.length; ++index) {
+      if (product['productId'].indexOf(productIdToExclude[index]) == -1) {
+        return true;
+      }
+    }
+    return false;
   }
   else {
     return true;
