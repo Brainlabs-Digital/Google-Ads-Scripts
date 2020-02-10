@@ -228,9 +228,7 @@ function getMetricsforRow(queries, contacts, accountName) {
 
 function getMetricsforSettings(queries, contacts, accountName) {
     var metricCounter = makeEmptyMetricCounter()
-    var totalCampaignCount = 0;
     for (var i = 0; i < queries.length; i++) {
-        var singleCampaignCount = 0
         var report = AdsApp.report(
             "SELECT " + METRICS.map(function (field) {
                 return field;
@@ -245,19 +243,13 @@ function getMetricsforSettings(queries, contacts, accountName) {
             });
         }
         while (rows.hasNext()) {
-            singleCampaignCount = parseInt(singleCampaignCount) + parseInt(1);
             var row = rows.next();
             metricCounter.map(function (metric) {
                 metric.value = parseFloat(metric.value) + (parseFloat((row[metric.name])) || 0);
                 return metric.value;
             });
         }
-        totalCampaignCount = parseInt(totalCampaignCount) + parseInt(singleCampaignCount)
     }
-    metricCounter.push({
-        name: "Total Campaigns",
-        value: totalCampaignCount
-    })
     return metricCounter;
 
     function makeEmptyMetricCounter() {
