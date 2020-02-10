@@ -18,7 +18,7 @@
 
 //Spreadsheet URL
 
-var SPREADSHEET_URL = 'https://docs.google.com/YOUR-SPREADSHEET-URL-HERE';
+var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/u/0/d/1pQ-m0OypEmOmV73pKfbh38xzGuqosEuKvCjVaDEgUzI/edit';
 
 //Ignore Paused Campaigns
 
@@ -36,6 +36,7 @@ var ignorePausedCampaigns = true;
 // https://developers.google.com/adwords/api/docs/appendix/reports/campaign-performance-report
 
 var METRICS = [
+    'Amount',
     'AverageCpc',
     'Clicks',
     'Conversions',
@@ -182,16 +183,16 @@ function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotC
     var whereStatementsArray = [];
 
     if (ignorePausedCampaigns) {
-        whereStatement += "CampaignStatus = ENABLED ";
+        whereStatement += "AssociatedCampaignStatus = ENABLED ";
     } else {
-        whereStatement += "CampaignStatus IN ['ENABLED','PAUSED'] ";
+        whereStatement += "AssociatedCampaignStatus IN ['ENABLED','PAUSED'] ";
     }
 
     for (var i = 0; i < campaignNameDoesNotContain.length; i++) {
         if (campaignNameDoesNotContain == "") {
             break;;
         } else {
-            whereStatement += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" +
+            whereStatement += "AND AssociatedCampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" +
                 campaignNameDoesNotContain[i].replace(/"/g, '\\\"') + "' ";
         }
     }
@@ -201,7 +202,7 @@ function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotC
 
     } else {
         for (var i = 0; i < campaignNameContains.length; i++) {
-            whereStatementsArray.push(whereStatement + 'AND CampaignName CONTAINS_IGNORE_CASE "' +
+            whereStatementsArray.push(whereStatement + 'AND AssociatedCampaignName CONTAINS_IGNORE_CASE "' +
                 campaignNameContains[i].replace(/"/g, '\\\"') + '" '
             );
         }
@@ -231,9 +232,9 @@ function getMetricsforSettings(queries, contacts, accountName) {
     for (var i = 0; i < queries.length; i++) {
         var singleCampaignCount = 0
         var report = AdsApp.report(
-            "SELECT Amount, " + METRICS.map(function (field) {
+            "SELECT " + METRICS.map(function (field) {
                 return field;
-            }).join(',') + " FROM CAMPAIGN_PERFORMANCE_REPORT " + queries[i]
+            }).join(',') + " FROM BUDGET_PERFORMANCE_REPORT " + queries[i]
         );
         var rows = report.rows();
         if (rows.hasNext() === false) {
