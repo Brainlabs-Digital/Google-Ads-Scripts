@@ -3,7 +3,7 @@
  * Bid Strategy Performance Monitor
  *
  * This script allows Google Ads MCC Accounts to monitor the performance
- * of various bidding strategies on child accounts based on defined
+ * of various budgets on child accounts based on defined
  * metrics.
  *
  * Version: 1.0
@@ -45,21 +45,6 @@ var METRICS = [
     'TopImpressionPercentage'
 ];
 
-//Bidding Strategies
-
-var BIDDING_STRATEGIES = {
-    'Manual CPC': 'MANUAL_CPC',
-    'Manual CPV': 'MANUAL_CPV',
-    'Manual CPM': 'MANUAL_CPM',
-    'Target search page location': 'PAGE_ONE_PROMOTED',
-    'Maximize clicks': 'TARGET_SPEND',
-    'Target CPA': 'TARGET_CPA',
-    'Target ROAS': 'TARGET_ROAS',
-    'Maximize Conversions': 'MAXIMIZE_CONVERSIONS',
-    'Maximize Conversion Value': 'MAXIMIZE_CONVERSION_VALUE',
-    'Target Outranking Share': 'TARGET_OUTRANK_SHARE'
-};
-
 // Indices
 
 var INPUT_HEADER_ROW = 1;
@@ -84,7 +69,6 @@ function main() {
     var statusColumnIndex = inputHeaders.indexOf("Status");
     var accountIDColumnIndex = inputHeaders.indexOf("Account ID");
     var accountNameColumnIndex = inputHeaders.indexOf("Account Name")
-    var biddingStrategyColumnIndex = inputHeaders.indexOf("Bidding Strategy");
     var campaignNameContainsIndex = inputHeaders.indexOf("Campaign Name Contains");
     var campaignNameDoesNotContainIndex = inputHeaders.indexOf("Campaign Name Doesn't Contain");
     var contactEmailsColumnIndex = inputHeaders.indexOf("Contact email(s)")
@@ -111,10 +95,10 @@ function main() {
         var childAccount = getAccountId(row[accountIDColumnIndex], contacts, accountName);
         AdsManagerApp.select(childAccount);
         var dates = getDates([row[startDateColumnIndex], row[endDateColumnIndex]], tz, contacts, accountName);
-        var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex], row[biddingStrategyColumnIndex])
+        var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
         var dataRow = getMetricsforRow(combinedQueries, contacts, accountName);
         var outputRows = [];
-        outputRows = [row[accountNameColumnIndex], row[accountIDColumnIndex], row[biddingStrategyColumnIndex]]
+        outputRows = [row[accountNameColumnIndex], row[accountIDColumnIndex]]
             .concat(dataRow.map(function (data) {
                 return data.value
             }));
@@ -181,7 +165,7 @@ function getDates(dates, tz, contacts, accountName) {
     }
 }
 
-function makeQueries(dates, campaignNameContains, campaignNameDoesNotContain, biddingStrategy) {
+function makeQueries(dates, campaignNameContains, campaignNameDoesNotContain) {
     var campaignNameContains = campaignNameContains.split(',').map(function (item) {
         return item.trim();
     });
@@ -189,8 +173,7 @@ function makeQueries(dates, campaignNameContains, campaignNameDoesNotContain, bi
         return item.trim();
     });
     var campaignFilterQueries = makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotContain, ignorePausedCampaigns);
-    var biddingStrategyQuery = makeBiddingStrategyStatement((biddingStrategy));
-    var combinedQueries = combineQueries(dates, biddingStrategyQuery, campaignFilterQueries);
+    var combinedQueries = combineQueries(dates, campaignFilterQueries);
     return combinedQueries;
 }
 
@@ -226,23 +209,12 @@ function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotC
     return whereStatementsArray;
 }
 
-function makeBiddingStrategyStatement(biddingStrategy) {
-    if (biddingStrategy.length === 0) {
-        return ""
-    } else {
-        for (var key in BIDDING_STRATEGIES) {
-            if (key == biddingStrategy) {
-                return " AND BiddingStrategyType = " + BIDDING_STRATEGIES[key]
-            };
-        }
-    }
-};
 
-function combineQueries(dates, biddingStrategyQuery, campaignFilterQueries) {
+function combineQueries(dates, campaignFilterQueries) {
     var combinedQueries = []
     for (var i = 0; i < campaignFilterQueries.length; i++) {
         combinedQueries.push(campaignFilterQueries[i]
-            .concat(biddingStrategyQuery + " DURING " + dates[0] + "," + dates[1]));
+            .concat(" DURING " + dates[0] + "," + dates[1]));
     }
     return combinedQueries;
 }
@@ -259,7 +231,7 @@ function getMetricsforSettings(queries, contacts, accountName) {
     for (var i = 0; i < queries.length; i++) {
         var singleCampaignCount = 0
         var report = AdsApp.report(
-            "SELECT " + METRICS.map(function (field) {
+            "SELECT Amount, " + METRICS.map(function (field) {
                 return field;
             }).join(',') + " FROM CAMPAIGN_PERFORMANCE_REPORT " + queries[i]
         );
