@@ -96,15 +96,15 @@ function main() {
         var dates = getDates([row[startDateColumnIndex], row[endDateColumnIndex]], tz, contacts, accountName);
         var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
         var budgetData = getBudgetData(combinedQueries, contacts, accountName);
+        var accountCurrencyCode = getAccountCurrencyCode();
         var accountDataRow = [row[accountNameColumnIndex], row[accountIDColumnIndex]]
         outputRows = budgetData.map(function (budgetDataRow) {
             return accountDataRow.concat(budgetDataRow.map(function (field) {
                 return field.value;
-            }))
+            })).concat([accountCurrencyCode])
         });
         Logger.log(outputRows)
         writeRowsOntoSheet(outputSheet, outputRows);
-        setDate(outputSheet, timeRunIndex);
     }
     Logger.log("Success.")
 }
@@ -220,26 +220,36 @@ function combineQueries(dates, campaignFilterQueries) {
     return combinedQueries;
 }
 
+function getAccountCurrencyCode() {
+    var report = AdsApp.report("SELECT AccountCurrencyCode FROM ACCOUNT_PERFORMANCE_REPORT");
+    var reportRow = report.rows().next();
+    return reportRow["AccountCurrencyCode"]
+}
+
 function getBudgetData(queries, contacts, accountName) {
     dataRows = []
-    var predefinedFields = ["BudgetId", "BudgetName", "Amount"]
-    var fields = predefinedFields.concat(METRICS);
+    var predefinedFields = ["BudgetName", "BudgetId", "BudgetReferenceCount"]
+    var fields = predefinedFields.concat(METRICS).concat(["Amount"]);
     for (var i = 0; i < queries.length; i++) {
         var report = AdsApp.report(
             "SELECT " + fields.map(function (field) {
                 return field;
             }).join(',') + " FROM BUDGET_PERFORMANCE_REPORT " + queries[i]
         );
+        var budgetIds = [];
         var reportRows = report.rows();
         while (reportRows.hasNext()) {
             var reportRow = reportRows.next();
-            var dataRow = fields.map(function (field) {
-                return {
-                    name: field,
-                    value: reportRow[field] || "N/A"
-                };
-            });
-            dataRows.push(dataRow)
+            if (budgetIds.indexOf(reportRow["BudgetId"]) == -1) {
+                budgetIds.push(reportRow["BudgetId"]);
+                var dataRow = fields.map(function (field) {
+                    return {
+                        name: field,
+                        value: reportRow[field] || "N/A"
+                    };
+                });
+                dataRows.push(dataRow)
+            }
         }
     }
     if (reportRows.hasNext() === false) {
