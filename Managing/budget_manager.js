@@ -96,14 +96,14 @@ function main() {
         var dates = getDates([row[startDateColumnIndex], row[endDateColumnIndex]], tz, contacts, accountName);
         var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
         var budgetData = getBudgetData(combinedQueries, contacts, accountName);
-        var accountData = [row[accountNameColumnIndex], row[accountIDColumnIndex]]
-        outputRows = budgetData.map(function (dataRow) {
-            return accountData.concat(dataRow.map(function (obj) {
-                return obj.value;
+        var accountDataRow = [row[accountNameColumnIndex], row[accountIDColumnIndex]]
+        outputRows = budgetData.map(function (budgetDataRow) {
+            return accountDataRow.concat(budgetDataRow.map(function (field) {
+                return field.value;
             }))
         });
         Logger.log(outputRows)
-        writeRows(outputSheet, outputRows);
+        writeRowsOntoSheet(outputSheet, outputRows);
         setDate(outputSheet, timeRunIndex);
     }
     Logger.log("Success.")
@@ -252,13 +252,13 @@ function getBudgetData(queries, contacts, accountName) {
     return dataRows;
 }
 
-function writeRows(sheet, rows) {
+function writeRowsOntoSheet(sheet, rows) {
     for (var i = 0; i < 5; i++) {
         try {
-            sheet.getRange((sheet.getLastRow() + 1), 1, 1, rows.length).setValues([rows]);
-
-            break;
-
+            for (var i = 0; i < rows.length; i++) {
+                row = rows[i];
+                sheet.getRange((sheet.getLastRow() + 1), 1, 1, row.length).setValues([row]);
+            }
         } catch (e) {
             if (e == "Exception: This action would increase the number of cells in the worksheet above the limit of 2000000 cells.") {
                 Logger.log("Could not write to spreadsheet: '" + e + "'");
