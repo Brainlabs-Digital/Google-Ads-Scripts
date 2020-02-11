@@ -36,14 +36,12 @@ var ignorePausedCampaigns = true;
 // https://developers.google.com/adwords/api/docs/appendix/reports/campaign-performance-report
 
 var METRICS = [
-    'Amount',
     'AverageCpc',
     'Clicks',
     'Conversions',
     'Cost',
     'Ctr',
-    'Impressions',
-    'TopImpressionPercentage'
+    'Impressions'
 ];
 
 // Indices
@@ -97,12 +95,14 @@ function main() {
         AdsManagerApp.select(childAccount);
         var dates = getDates([row[startDateColumnIndex], row[endDateColumnIndex]], tz, contacts, accountName);
         var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
-        var dataRow = getMetricsforRow(combinedQueries, contacts, accountName);
-        var outputRows = [];
-        outputRows = [row[accountNameColumnIndex], row[accountIDColumnIndex]]
-            .concat(dataRow.map(function (data) {
-                return data.value
-            }));
+        var budgetData = getBudgetData(combinedQueries, contacts, accountName);
+        var accountData = [row[accountNameColumnIndex], row[accountIDColumnIndex]]
+        outputRows = budgetData.map(function (dataRow) {
+            return accountData.concat(dataRow.map(function (obj) {
+                return obj.value;
+            }))
+        });
+        Logger.log(outputRows)
         writeRows(outputSheet, outputRows);
         setDate(outputSheet, timeRunIndex);
     }
@@ -220,48 +220,36 @@ function combineQueries(dates, campaignFilterQueries) {
     return combinedQueries;
 }
 
-function getMetricsforRow(queries, contacts, accountName) {
-
-    var ReportRows = getMetricsforSettings(queries, contacts, accountName);
-    return ReportRows;
-}
-
-function getMetricsforSettings(queries, contacts, accountName) {
-    var metricCounter = makeEmptyMetricCounter()
+function getBudgetData(queries, contacts, accountName) {
+    dataRows = []
+    var predefinedFields = ["BudgetId", "BudgetName", "Amount"]
+    var fields = predefinedFields.concat(METRICS);
     for (var i = 0; i < queries.length; i++) {
         var report = AdsApp.report(
-            "SELECT " + METRICS.map(function (field) {
+            "SELECT " + fields.map(function (field) {
                 return field;
             }).join(',') + " FROM BUDGET_PERFORMANCE_REPORT " + queries[i]
         );
-        var rows = report.rows();
-        if (rows.hasNext() === false) {
-            MailApp.sendEmail({
-                to: contacts.join(),
-                subject: "Bid Strategy Performance Monitor: error with account " + accountName,
-                htmlBody: "No campaigns found with the given settings: " + queries[i]
+        var reportRows = report.rows();
+        while (reportRows.hasNext()) {
+            var reportRow = reportRows.next();
+            var dataRow = fields.map(function (field) {
+                return {
+                    name: field,
+                    value: reportRow[field] || "N/A"
+                };
             });
-        }
-        while (rows.hasNext()) {
-            var row = rows.next();
-            metricCounter.map(function (metric) {
-                metric.value = parseFloat(metric.value) + (parseFloat((row[metric.name])) || 0);
-                return metric.value;
-            });
+            dataRows.push(dataRow)
         }
     }
-    return metricCounter;
-
-    function makeEmptyMetricCounter() {
-        var metricCounter = [];
-        metricCounter.push(METRICS.map(function (field) {
-            return {
-                name: field,
-                value: 0
-            };
-        }));
-        return metricCounter[0];
+    if (reportRows.hasNext() === false) {
+        MailApp.sendEmail({
+            to: contacts.join(),
+            subject: "Bid Strategy Performance Monitor: error with account " + accountName,
+            htmlBody: "No campaigns found with the given settings: " + queries[i]
+        });
     }
+    return dataRows;
 }
 
 function writeRows(sheet, rows) {
