@@ -229,8 +229,7 @@ function getAccountCurrencyCode() {
 
 function getBudgetData(queries, contacts, accountName) {
     dataRows = []
-    var predefinedFields = ["BudgetName", "BudgetId", "BudgetReferenceCount"]
-    var fields = predefinedFields.concat(METRICS).concat(["Amount"]);
+    var fields = ["BudgetName", "BudgetId", "BudgetReferenceCount", "Amount"]
     for (var i = 0; i < queries.length; i++) {
         var report = AdsApp.report(
             "SELECT " + fields.map(function (field) {
@@ -239,6 +238,13 @@ function getBudgetData(queries, contacts, accountName) {
         );
         var budgetIds = [];
         var reportRows = report.rows();
+        if (reportRows.hasNext() === false) {
+            MailApp.sendEmail({
+                to: contacts.join(),
+                subject: "Bid Strategy Performance Monitor: error with account " + accountName,
+                htmlBody: "No campaigns found with the given settings: " + queries[i]
+            });
+        }
         while (reportRows.hasNext()) {
             var reportRow = reportRows.next();
             if (budgetIds.indexOf(reportRow["BudgetId"]) == -1) {
