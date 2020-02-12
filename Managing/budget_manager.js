@@ -25,7 +25,7 @@ var RUN_TYPE = 'SET_RUN_TYPE_HERE';
 
 //Spreadsheet URL
 
-var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/u/0/d/1pQ-m0OypEmOmV73pKfbh38xzGuqosEuKvCjVaDEgUzI/edit';
+var SPREADSHEET_URL = 'YOUR-SPREADSHEET-URL-HERE';
 
 //Ignore Paused Campaigns
 
