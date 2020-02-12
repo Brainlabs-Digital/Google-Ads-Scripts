@@ -92,16 +92,14 @@ function download(spreadsheet) {
 
     //Store Sheet Headers and Indices
     var inputHeaders = inputSheet.getRange(INPUT_HEADER_ROW + ":" + INPUT_HEADER_ROW).getValues()[0];
-    var statusColumnIndex = inputHeaders.indexOf("Status");
-    var accountIDColumnIndex = inputHeaders.indexOf("Account ID");
-    var accountNameColumnIndex = inputHeaders.indexOf("Account Name")
+    var statusIndex = inputHeaders.indexOf("Status");
+    var accountIDIndex = inputHeaders.indexOf("Account ID");
+    var accountNameIndex = inputHeaders.indexOf("Account Name");
     var campaignNameContainsIndex = inputHeaders.indexOf("Campaign Name Contains");
     var campaignNameDoesNotContainIndex = inputHeaders.indexOf("Campaign Name Doesn't Contain");
-    var contactEmailsColumnIndex = inputHeaders.indexOf("Contact email(s)")
-    var startDateColumnIndex = inputHeaders.indexOf("Start Date");
-    var endDateColumnIndex = inputHeaders.indexOf("End Date");
-    var outputHeaders = outputSheet.getRange(OUTPUT_HEADER_ROW + ":" + OUTPUT_HEADER_ROW).getValues()[0];
-    var timeRunIndex = outputHeaders.indexOf("Time Run");
+    var contactEmailsIndex = inputHeaders.indexOf("Contact email(s)");
+    var startDateIndex = inputHeaders.indexOf("Start Date");
+    var endDateIndex = inputHeaders.indexOf("End Date");
 
     //Get all rows of data.
 
@@ -111,20 +109,19 @@ function download(spreadsheet) {
     Logger.log("Verifying each row of data...")
     for (var i = 0; i < allData.length; i++) {
         var row = allData[i];
-        if (row[statusColumnIndex] == "Paused") {
+        if (row[statusIndex] == "Paused") {
             continue;
         };
-        var accountName = row[accountNameColumnIndex];
-        var contacts = (row[contactEmailsColumnIndex]).split(',').map(function (item) {
+        var contacts = (row[contactEmailsIndex]).split(',').map(function (item) {
             return item.trim();
         });
-        var childAccount = getAccountId(row[accountIDColumnIndex], contacts, accountName);
+        var childAccount = getAccountId(row[accountIDIndex], contacts, row[accountNameIndex]);
         AdsManagerApp.select(childAccount);
-        var dates = getDates([row[startDateColumnIndex], row[endDateColumnIndex]], tz, contacts, accountName);
+        var dates = getDates([row[startDateIndex], row[endDateIndex]], tz, contacts, row[accountNameIndex]);
         var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
-        var budgetData = getBudgetData(combinedQueries, contacts, accountName);
+        var budgetData = getBudgetData(combinedQueries, contacts, row[accountNameIndex]);
         var accountCurrencyCode = getAccountCurrencyCode();
-        var accountDataRow = [row[accountNameColumnIndex], row[accountIDColumnIndex]]
+        var accountDataRow = [row[accountNameIndex], row[accountIDIndex]]
         outputRows = budgetData.map(function (budgetDataRow) {
             return accountDataRow.concat(budgetDataRow.map(function (field) {
                 return field.value;
