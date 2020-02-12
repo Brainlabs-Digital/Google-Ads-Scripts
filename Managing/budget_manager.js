@@ -45,10 +45,11 @@ var ignorePausedCampaigns = true;
 
 // Indices
 
-var INPUT_HEADER_ROW = 1;
-var INPUT_DATA_ROW = 3;
-var OUTPUT_HEADER_ROW = 5;
-var OUTPUT_FIRST_DATA_ROW = 6;
+var EMAIL_CELL = "B1";
+var INPUT_HEADER_ROW = 3;
+var INPUT_DATA_ROW = 5;
+var OUTPUT_HEADER_ROW = 6;
+var OUTPUT_FIRST_DATA_ROW = 7;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -57,34 +58,47 @@ var OUTPUT_FIRST_DATA_ROW = 6;
 function main() {
 
     var spreadsheet = getSpreadsheet(SPREADSHEET_URL);
+    var emails = getEmails(spreadsheet);
     var runType = RUN_TYPE;
     if (runType.toLowerCase() == "download") {
-        download(spreadsheet);
+        download(spreadsheet, emails);
     } else if (runType.toLowerCase() == "update") {
-        update(spreadsheet);
+        update(spreadsheet, emails);
     } else {
-        Logger.log("input for RUN_TYPE variable \"" + runType +
-            "\" not recognised. Please enter either 'download' or 'update' (including quotation marks)");
+        throw ("input for RUN_TYPE variable \"" + runType +
+            "\" not recognised. Please enter either 'DOWNLOAD' or 'UPDATE' (including quotation marks)");
     }
 }
 
+function getEmails(spreadsheet) {
+    var inputSheet = spreadsheet.getSheetByName("Input");
+    var emailString = inputSheet.getRange("B1").getValue()
+    var emailList = emailString.split(',').map(function (item) {
+        return item.trim();
+    });
+    if (emailString.length !== 0) {
+        return emailList;
+    } else {
+        throw ("No email entered. Enter an email so that you may be notified of any script errors.")
+    }
+}
 
-function update(spreadsheet) {
+function update(spreadsheet, emails) {
 
     var outputSheet = spreadsheet.getSheetByName("Output");
-    var budgetsToChange = getBudgetsToChange(outputSheet);
+    var budgetsToChange = getBudgetsToChange(outputSheet, emails);
     for (var i = 0; i < budgetsToChange.length; i++) {
         budgetToChange = budgetsToChange[i];
-        updateBudgetOnGoogleAds(budgetToChange);
+        updateBudgetOnGoogleAds(budgetToChange, emails);
     }
     Logger.log("clearing sheet");
     clearSheet(outputSheet);
     Logger.log("Re-downloading budgets");
-    download(spreadsheet);
+    download(spreadsheet, emails);
     Logger.log("Success");
 }
 
-function download(spreadsheet) {
+function download(spreadsheet, emails) {
 
     var inputSheet = spreadsheet.getSheetByName("Input");
     var outputSheet = spreadsheet.getSheetByName("Output");
@@ -97,7 +111,6 @@ function download(spreadsheet) {
     var accountNameIndex = inputHeaders.indexOf("Account Name");
     var campaignNameContainsIndex = inputHeaders.indexOf("Campaign Name Contains");
     var campaignNameDoesNotContainIndex = inputHeaders.indexOf("Campaign Name Doesn't Contain");
-    var contactEmailsIndex = inputHeaders.indexOf("Contact email(s)");
     var startDateIndex = inputHeaders.indexOf("Start Date");
     var endDateIndex = inputHeaders.indexOf("End Date");
 
@@ -112,14 +125,11 @@ function download(spreadsheet) {
         if (row[statusIndex] == "Paused") {
             continue;
         };
-        var contacts = (row[contactEmailsIndex]).split(',').map(function (item) {
-            return item.trim();
-        });
-        var childAccount = getAccountId(row[accountIDIndex], contacts, row[accountNameIndex]);
+        var childAccount = getAccountId(row[accountIDIndex], emails, row[accountNameIndex]);
         AdsManagerApp.select(childAccount);
-        var dates = getDates([row[startDateIndex], row[endDateIndex]], tz, contacts, row[accountNameIndex]);
+        var dates = getDates([row[startDateIndex], row[endDateIndex]], tz, emails, row[accountNameIndex]);
         var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
-        var budgetData = getBudgetData(combinedQueries, contacts, row[accountNameIndex]);
+        var budgetData = getBudgetData(combinedQueries, emails, row[accountNameIndex]);
         var accountCurrencyCode = getAccountCurrencyCode();
         var accountDataRow = [row[accountNameIndex], row[accountIDIndex]]
         outputRows = budgetData.map(function (budgetDataRow) {
@@ -130,7 +140,7 @@ function download(spreadsheet) {
         Logger.log(outputRows)
         writeRowsOntoSheet(outputSheet, outputRows);
     }
-    setDate(outputSheet);
+    setDate(outputSheet, tz);
     Logger.log("Success.")
 }
 
@@ -155,16 +165,19 @@ function getBudgetsToChange(sheet) {
 }
 
 
-function updateBudgetOnGoogleAds(budgetToChange) {
-    var childAccount = AdsManagerApp.accounts().withIds([accountId]).get().next();
+function updateBudgetOnGoogleAds(budgetToChange, emails) {
+    var childAccount = getAccountId(budgetToChange["Account ID"], emails, budgetToChange["Account Name"])
     AdsManagerApp.select(childAccount);
-    var newBudget = parseFloat(budgetToChange["Set New Budget"]);
     var budgetIterator = AdsApp.budgets().withCondition("BudgetId = " + budgetToChange["Budget ID"]).get();
     if (budgetIterator.hasNext()) {
         var budget = budgetIterator.next();
-        budget.setAmount(budgetToChange["Set New Budget"]);
-    }
+        try {
+            budget.setAmount(budgetToChange["Set New Budget"]);
 
+        } catch (e) {
+            throw ("Unable to update budgets: " + e)
+        }
+    }
 }
 
 function getSpreadsheet(spreadsheetUrl) {
@@ -187,13 +200,13 @@ function getSpreadsheet(spreadsheetUrl) {
     }
 }
 
-function getAccountId(accountId, contacts, accountName) {
+function getAccountId(accountId, emails, accountName) {
     var childAccount = AdsManagerApp.accounts().withIds([accountId]).get();
     if (childAccount.hasNext()) {
         return childAccount.next();
     } else {
         MailApp.sendEmail({
-            to: contacts.join(),
+            to: emails.join(),
             subject: "Bid Strategy Performance Monitor: error with account " + accountName,
             htmlBody: "Could not find account with ID: " + accountId + "."
         });
@@ -208,7 +221,7 @@ function clearSheet(sheet) {
     });
 }
 
-function getDates(dates, tz, contacts, accountName) {
+function getDates(dates, tz, emails, accountName) {
     var validatedDates = dates.map(function (date) {
         if (date.length === 0) {
             var today = new Date()
@@ -221,12 +234,12 @@ function getDates(dates, tz, contacts, accountName) {
         return validatedDates;
     } else {
         MailApp.sendEmail({
-            to: contacts.join(),
+            to: emails.join(),
             subject: "Bid Strategy Performance Monitor: error with account " + accountName,
             htmlBody: ("Invalid date ranges (yyyMMdd): End Date: " +
                 validatedDates[1] + " precedes Start date: " + validatedDates[0])
         })
-        throw ("Invalid date ranges: End Date precedes Start Date.");
+        throw ("Invalid date ranges: End Date: " + validatedDates[1] + "precedes Start Date: " + validatedDates[0]);
     }
 }
 
@@ -291,7 +304,7 @@ function getAccountCurrencyCode() {
     return reportRow["AccountCurrencyCode"]
 }
 
-function getBudgetData(queries, contacts, accountName) {
+function getBudgetData(queries, emails, accountName) {
     dataRows = []
     var fields = ["BudgetName", "BudgetId", "BudgetReferenceCount", "Amount"]
     for (var i = 0; i < queries.length; i++) {
@@ -304,7 +317,7 @@ function getBudgetData(queries, contacts, accountName) {
         var reportRows = report.rows();
         if (reportRows.hasNext() === false) {
             MailApp.sendEmail({
-                to: contacts.join(),
+                to: emails.join(),
                 subject: "Bid Strategy Performance Monitor: error with account " + accountName,
                 htmlBody: "No campaigns found with the given settings: " + queries[i]
             });
@@ -333,7 +346,7 @@ function writeRowsOntoSheet(sheet, rows) {
     }
 }
 
-function setDate(sheet) {
-    var now = new Date();
+function setDate(sheet, tz) {
+    var now = Utilities.formatDate(new Date(), tz, 'dd-MM-yyyy HH:mm:ss');
     sheet.getRange("H2").setValue(now);
 }
