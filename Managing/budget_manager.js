@@ -179,13 +179,14 @@ function makeQueries(dates, campaignNameContains, campaignNameDoesNotContain) {
 }
 
 function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotContain, ignorePausedCampaigns) {
-    var whereStatement = "WHERE ";
+    var whereStatement = "WHERE BudgetStatus != REMOVED ";
     var whereStatementsArray = [];
 
+
     if (ignorePausedCampaigns) {
-        whereStatement += "AssociatedCampaignStatus = ENABLED ";
+        whereStatement += "AND AssociatedCampaignStatus = ENABLED ";
     } else {
-        whereStatement += "AssociatedCampaignStatus IN ['ENABLED','PAUSED'] ";
+        whereStatement += "AND AssociatedCampaignStatus IN ['ENABLED','PAUSED'] ";
     }
 
     for (var i = 0; i < campaignNameDoesNotContain.length; i++) {
