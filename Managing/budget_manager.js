@@ -1,6 +1,6 @@
 /**
  *
- * Bid Strategy Performance Monitor
+ * Budget Manager
  *
  * This script allows Google Ads MCC Accounts to monitor the performance
  * of various budgets on child accounts based on defined
@@ -15,6 +15,13 @@
 //////////////////////////////////////////////////////////////////////////////
 
 //Options
+
+//Run Type
+
+// Enter 'DOWNLOAD' to download budgets, or 'UPDATE' to update budgets once set new values on the sheet.
+// Include the quotation marks.
+
+var RUN_TYPE = 'SET_RUN_TYPE_HERE';
 
 //Spreadsheet URL
 
@@ -35,20 +42,13 @@ var ignorePausedCampaigns = true;
 // column of the Google Ads documentation to find other metrics to include:
 // https://developers.google.com/adwords/api/docs/appendix/reports/campaign-performance-report
 
-var METRICS = [
-    'AverageCpc',
-    'Clicks',
-    'Conversions',
-    'Cost',
-    'Ctr',
-    'Impressions'
-];
 
 // Indices
 
 var INPUT_HEADER_ROW = 1;
 var INPUT_DATA_ROW = 3;
-var OUTPUT_HEADER_ROW = 2;
+var OUTPUT_HEADER_ROW = 5;
+var OUTPUT_FIRST_DATA_ROW = 6;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -57,13 +57,40 @@ var OUTPUT_HEADER_ROW = 2;
 function main() {
 
     var spreadsheet = getSpreadsheet(SPREADSHEET_URL);
+    var runType = RUN_TYPE;
+    if (runType.toLowerCase() == "download") {
+        download(spreadsheet);
+    } else if (runType.toLowerCase() == "update") {
+        update(spreadsheet);
+    } else {
+        Logger.log("input for RUN_TYPE variable \"" + runType +
+            "\" not recognised. Please enter either 'download' or 'update' (including quotation marks)");
+    }
+}
+
+
+function update(spreadsheet) {
+
+    var outputSheet = spreadsheet.getSheetByName("Output");
+    var budgetsToChange = getBudgetsToChange(outputSheet);
+    for (var i = 0; i < budgetsToChange.length; i++) {
+        budgetToChange = budgetsToChange[i];
+        updateBudgetOnGoogleAds(budgetToChange);
+    }
+    Logger.log("clearing sheet");
+    clearSheet(outputSheet);
+    Logger.log("Re-downloading budgets");
+    download(spreadsheet);
+    Logger.log("Success");
+}
+
+function download(spreadsheet) {
+
     var inputSheet = spreadsheet.getSheetByName("Input");
     var outputSheet = spreadsheet.getSheetByName("Output");
-
     var tz = AdsApp.currentAccount().getTimeZone();
 
     //Store Sheet Headers and Indices
-
     var inputHeaders = inputSheet.getRange(INPUT_HEADER_ROW + ":" + INPUT_HEADER_ROW).getValues()[0];
     var statusColumnIndex = inputHeaders.indexOf("Status");
     var accountIDColumnIndex = inputHeaders.indexOf("Account ID");
@@ -106,7 +133,41 @@ function main() {
         Logger.log(outputRows)
         writeRowsOntoSheet(outputSheet, outputRows);
     }
+    setDate(outputSheet);
     Logger.log("Success.")
+}
+
+function getBudgetsToChange(sheet) {
+    var dataRange = sheet.getRange(OUTPUT_HEADER_ROW, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+    var headers = dataRange.shift();
+    var allBudgets = dataRange.map(function (budgetData) {
+        return headers.reduce(function (budgetRow, header, index) {
+            budgetRow[header] = budgetData[index];
+            return budgetRow;
+        }, {});
+    });
+    budgetsToChange = [];
+    for (var i = 0; i < allBudgets.length; i++) {
+        var budgetRow = allBudgets[i];
+        var updateBudgetCol = budgetRow["Set New Budget"];
+        if (updateBudgetCol.length !== 0) {
+            budgetsToChange.push(budgetRow);
+        }
+    }
+    return budgetsToChange;
+}
+
+
+function updateBudgetOnGoogleAds(budgetToChange) {
+    var childAccount = AdsManagerApp.accounts().withIds([accountId]).get().next();
+    AdsManagerApp.select(childAccount);
+    var newBudget = parseFloat(budgetToChange["Set New Budget"]);
+    var budgetIterator = AdsApp.budgets().withCondition("BudgetId = " + budgetToChange["Budget ID"]).get();
+    if (budgetIterator.hasNext()) {
+        var budget = budgetIterator.next();
+        budget.setAmount(budgetToChange["Set New Budget"]);
+    }
+
 }
 
 function getSpreadsheet(spreadsheetUrl) {
@@ -142,6 +203,12 @@ function getAccountId(accountId, contacts, accountName) {
         throw ("Could not find account with ID: " + accountId);
     }
 
+}
+
+function clearSheet(sheet) {
+    sheet.getRange(OUTPUT_FIRST_DATA_ROW, 1, sheet.getLastRow(), sheet.getLastColumn()).clear({
+        contentsOnly: true
+    });
 }
 
 function getDates(dates, tz, contacts, accountName) {
@@ -259,42 +326,17 @@ function getBudgetData(queries, contacts, accountName) {
             }
         }
     }
-    if (reportRows.hasNext() === false) {
-        MailApp.sendEmail({
-            to: contacts.join(),
-            subject: "Bid Strategy Performance Monitor: error with account " + accountName,
-            htmlBody: "No campaigns found with the given settings: " + queries[i]
-        });
-    }
     return dataRows;
 }
 
 function writeRowsOntoSheet(sheet, rows) {
-    for (var i = 0; i < 5; i++) {
-        try {
-            for (var i = 0; i < rows.length; i++) {
-                row = rows[i];
-                sheet.getRange((sheet.getLastRow() + 1), 1, 1, row.length).setValues([row]);
-            }
-        } catch (e) {
-            if (e == "Exception: This action would increase the number of cells in the worksheet above the limit of 2000000 cells.") {
-                Logger.log("Could not write to spreadsheet: '" + e + "'");
-                try {
-                    sheet.getRange("R" + (sheet.getLastRow() + 2) + "C1")
-                        .setValue("Not enough space to write the data - try again in an empty spreadsheet");
-                } catch (e2) {
-                    Logger.log("Error writing 'not enough space' message: " + e2);
-                }
-                break;
-            }
-            if (i == 4) {
-                Logger.log("Could not write to spreadsheet: '" + e + "'");
-            }
-        }
+    for (var i = 0; i < rows.length; i++) {
+        row = rows[i];
+        sheet.getRange((sheet.getLastRow() + 1), 1, 1, row.length).setValues([row]);
     }
 }
 
-function setDate(sheet, columnIndex) {
+function setDate(sheet) {
     var now = new Date();
-    sheet.getRange((sheet.getLastRow()), columnIndex + 1).setValue(now);
+    sheet.getRange("H2").setValue(now);
 }
