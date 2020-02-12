@@ -45,10 +45,10 @@ var ignorePausedCampaigns = true;
 
 // Indices
 
-var INPUT_HEADER_ROW = 1;
-var INPUT_DATA_ROW = 3;
-var OUTPUT_HEADER_ROW = 6;
-var OUTPUT_FIRST_DATA_ROW = 7;
+var CONFIG_HEADER_ROW = 1;
+var CONFIG_DATA_ROW = 3;
+var DASHBOARD_HEADER_ROW = 6;
+var DASHBOARD_FIRST_DATA_ROW = 7;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -70,14 +70,14 @@ function main() {
 
 function update(spreadsheet) {
 
-    var outputSheet = spreadsheet.getSheetByName("Output");
-    var budgetsToChange = getBudgetsToChange(outputSheet);
+    var dashboardSheet = spreadsheet.getSheetByName("Dashboard");
+    var budgetsToChange = getBudgetsToChange(dashboardSheet);
     for (var i = 0; i < budgetsToChange.length; i++) {
         budgetToChange = budgetsToChange[i];
         updateBudgetOnGoogleAds(budgetToChange);
     }
     Logger.log("clearing sheet");
-    clearSheet(outputSheet);
+    clearSheet(dashboardSheet);
     Logger.log("Re-downloading budgets");
     download(spreadsheet);
     Logger.log("Success");
@@ -85,23 +85,23 @@ function update(spreadsheet) {
 
 function download(spreadsheet) {
 
-    var inputSheet = spreadsheet.getSheetByName("Input");
-    var outputSheet = spreadsheet.getSheetByName("Output");
+    var configSheet = spreadsheet.getSheetByName("Configuation");
+    var dashboardSheet = spreadsheet.getSheetByName("Dashboard");
     var tz = AdsApp.currentAccount().getTimeZone();
 
     //Store Sheet Headers and Indices
-    var inputHeaders = inputSheet.getRange(INPUT_HEADER_ROW + ":" + INPUT_HEADER_ROW).getValues()[0];
-    var statusIndex = inputHeaders.indexOf("Status");
-    var accountIDIndex = inputHeaders.indexOf("Account ID");
-    var accountNameIndex = inputHeaders.indexOf("Account Name");
-    var campaignNameContainsIndex = inputHeaders.indexOf("Campaign Name Contains");
-    var campaignNameDoesNotContainIndex = inputHeaders.indexOf("Campaign Name Doesn't Contain");
-    var startDateIndex = inputHeaders.indexOf("Start Date");
-    var endDateIndex = inputHeaders.indexOf("End Date");
+    var configHeaders = configSheet.getRange(CONFIG_HEADER_ROW + ":" + CONFIG_HEADER_ROW).getValues()[0];
+    var statusIndex = configHeaders.indexOf("Status");
+    var accountIDIndex = configHeaders.indexOf("Account ID");
+    var accountNameIndex = configHeaders.indexOf("Account Name");
+    var campaignNameContainsIndex = configHeaders.indexOf("Campaign Name Contains");
+    var campaignNameDoesNotContainIndex = configHeaders.indexOf("Campaign Name Doesn't Contain");
+    var startDateIndex = configHeaders.indexOf("Start Date");
+    var endDateIndex = configHeaders.indexOf("End Date");
 
     //Get all rows of data.
 
-    var allData = inputSheet.getRange(INPUT_DATA_ROW, 1, inputSheet.getLastRow() - (INPUT_HEADER_ROW + 1), inputSheet.getLastColumn()).getValues();
+    var allData = configSheet.getRange(CONFIG_DATA_ROW, 1, configSheet.getLastRow() - (CONFIG_HEADER_ROW + 1), configSheet.getLastColumn()).getValues();
 
     //For each row of data:
     Logger.log("Verifying each row of data...")
@@ -117,20 +117,20 @@ function download(spreadsheet) {
         var budgetData = getBudgetData(combinedQueries, row[accountNameIndex]);
         var accountCurrencyCode = getAccountCurrencyCode();
         var accountDataRow = [row[accountNameIndex], row[accountIDIndex]]
-        outputRows = budgetData.map(function (budgetDataRow) {
+        var dashboardRows = budgetData.map(function (budgetDataRow) {
             return accountDataRow.concat(budgetDataRow.map(function (field) {
                 return field.value;
             })).concat([accountCurrencyCode])
         });
-        Logger.log(outputRows)
-        writeRowsOntoSheet(outputSheet, outputRows);
+        Logger.log(dashboardRows)
+        writeRowsOntoSheet(dasboardSheet, dashboardRows);
     }
-    setDate(outputSheet, tz);
+    setDate(dashboardSheet, tz);
     Logger.log("Success.")
 }
 
 function getBudgetsToChange(sheet) {
-    var dataRange = sheet.getRange(OUTPUT_HEADER_ROW, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+    var dataRange = sheet.getRange(DASHBOARD_HEADER_ROW, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
     var headers = dataRange.shift();
     var allBudgets = dataRange.map(function (budgetData) {
         return headers.reduce(function (budgetRow, header, index) {
@@ -196,7 +196,7 @@ function getAccountId(accountId) {
 }
 
 function clearSheet(sheet) {
-    sheet.getRange(OUTPUT_FIRST_DATA_ROW, 1, sheet.getLastRow(), sheet.getLastColumn()).clear({
+    sheet.getRange(DASHBOARD_FIRST_DATA_ROW, 1, sheet.getLastRow(), sheet.getLastColumn()).clear({
         contentsOnly: true
     });
 }
