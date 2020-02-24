@@ -36,17 +36,11 @@ var ignorePausedCampaigns = true;
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-// Metrics
-
-// Metrics are written onto output sheet in order stated below. Read the 'Metric'
-// column of the Google Ads documentation to find other metrics to include:
-// https://developers.google.com/adwords/api/docs/appendix/reports/campaign-performance-report
-
 
 // Indices
 
 var CONFIG_HEADER_ROW = 1;
-var CONFIG_DATA_ROW = 3;
+var CONFIG_FIRST_DATA_ROW = 3;
 var DASHBOARD_HEADER_ROW = 6;
 var DASHBOARD_FIRST_DATA_ROW = 7;
 
@@ -70,13 +64,14 @@ function main() {
 
 function update(spreadsheet) {
 
-    var dashboardSheet = spreadsheet.getSheetByName("Dashboard");
+    var dashboardSheet = spreadsheet.getSheetByName("Budget Dashboard");
     var budgetsToChange = getBudgetsToChange(dashboardSheet);
+    Logger.log("Updating budgets")
     for (var i = 0; i < budgetsToChange.length; i++) {
         budgetToChange = budgetsToChange[i];
         updateBudgetOnGoogleAds(budgetToChange);
     }
-    Logger.log("clearing sheet");
+    Logger.log("Clearing sheet");
     clearSheet(dashboardSheet);
     Logger.log("Re-downloading budgets");
     download(spreadsheet);
@@ -85,8 +80,8 @@ function update(spreadsheet) {
 
 function download(spreadsheet) {
 
-    var configSheet = spreadsheet.getSheetByName("Configuation");
-    var dashboardSheet = spreadsheet.getSheetByName("Dashboard");
+    var configSheet = spreadsheet.getSheetByName("Configuration");
+    var dashboardSheet = spreadsheet.getSheetByName("Budget Dashboard");
     var tz = AdsApp.currentAccount().getTimeZone();
 
     //Store Sheet Headers and Indices
@@ -101,7 +96,7 @@ function download(spreadsheet) {
 
     //Get all rows of data.
 
-    var allData = configSheet.getRange(CONFIG_DATA_ROW, 1, configSheet.getLastRow() - (CONFIG_HEADER_ROW + 1), configSheet.getLastColumn()).getValues();
+    var allData = configSheet.getRange(CONFIG_FIRST_DATA_ROW, 1, configSheet.getLastRow() - (CONFIG_HEADER_ROW + 1), configSheet.getLastColumn()).getValues();
 
     //For each row of data:
     Logger.log("Verifying each row of data...")
@@ -123,7 +118,7 @@ function download(spreadsheet) {
             })).concat([accountCurrencyCode])
         });
         Logger.log(dashboardRows)
-        writeRowsOntoSheet(dasboardSheet, dashboardRows);
+        writeRowsOntoSheet(dashboardSheet, dashboardRows);
     }
     setDate(dashboardSheet, tz);
     Logger.log("Success.")
@@ -166,7 +161,7 @@ function updateBudgetOnGoogleAds(budgetToChange) {
 }
 
 function getSpreadsheet(spreadsheetUrl) {
-    Logger.log('Checking spreadsheet: ' + SPREADSHEET_URL + ' is valid.');
+    Logger.log('Checking spreadsheet: ' + spreadsheetUrl + ' is valid.');
     if (spreadsheetUrl.replace(/[AEIOU]/g, "X") == "https://docs.google.com/YXXR-SPRXXDSHXXT-XRL-HXRX") {
         throw ("Problem with " + SPREADSHEET_URL +
             " URL: make sure you've replaced the default with a valid spreadsheet URL."
@@ -181,7 +176,7 @@ function getSpreadsheet(spreadsheetUrl) {
 
         return spreadsheet;
     } catch (e) {
-        throw ("Problem with " + SPREADSHEET_URL + " URL: '" + e + "'. You may not have edit access");
+        throw ("Problem with " + spreadsheetUrl + " URL: '" + e + "'. You may not have edit access");
     }
 }
 
@@ -230,19 +225,19 @@ function makeQueries(dates, campaignNameContains, campaignNameDoesNotContain) {
 }
 
 function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotContain, ignorePausedCampaigns) {
-    var whereStatement = "WHERE BudgetStatus != REMOVED ";
+    var whereStatement = "WHERE BudgetStatus != 'REMOVED' ";
     var whereStatementsArray = [];
 
 
     if (ignorePausedCampaigns) {
-        whereStatement += "AND AssociatedCampaignStatus = ENABLED ";
+        whereStatement += "AND AssociatedCampaignStatus = 'ENABLED' ";
     } else {
         whereStatement += "AND AssociatedCampaignStatus IN ['ENABLED','PAUSED'] ";
     }
 
     for (var i = 0; i < campaignNameDoesNotContain.length; i++) {
         if (campaignNameDoesNotContain == "") {
-            break;;
+            break;
         } else {
             whereStatement += "AND AssociatedCampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" +
                 campaignNameDoesNotContain[i].replace(/"/g, '\\\"') + "' ";
