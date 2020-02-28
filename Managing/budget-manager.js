@@ -91,8 +91,7 @@ function download(spreadsheet) {
     var accountNameIndex = configHeaders.indexOf("Account Name");
     var campaignNameContainsIndex = configHeaders.indexOf("Campaign Name Contains");
     var campaignNameDoesNotContainIndex = configHeaders.indexOf("Campaign Name Doesn't Contain");
-    var startDateIndex = configHeaders.indexOf("Start Date");
-    var endDateIndex = configHeaders.indexOf("End Date");
+
 
     //Get all rows of data.
 
@@ -107,8 +106,7 @@ function download(spreadsheet) {
         };
         var childAccount = getAccountId(row[accountIDIndex]);
         AdsManagerApp.select(childAccount);
-        var dates = getDates([row[startDateIndex], row[endDateIndex]], tz);
-        var combinedQueries = makeQueries(dates, row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
+        var combinedQueries = makeQueries(row[campaignNameContainsIndex], row[campaignNameDoesNotContainIndex])
         var budgetData = getBudgetData(combinedQueries, row[accountNameIndex]);
         var accountCurrencyCode = getAccountCurrencyCode();
         var accountDataRow = [row[accountNameIndex], row[accountIDIndex]]
@@ -196,23 +194,7 @@ function clearSheet(sheet) {
     });
 }
 
-function getDates(dates, tz) {
-    var validatedDates = dates.map(function (date) {
-        if (date.length === 0) {
-            var today = new Date()
-            return Utilities.formatDate(today, tz, 'yyyyMMdd');
-        } else {
-            return Utilities.formatDate(new Date(date), tz, 'yyyyMMdd');
-        }
-    })
-    if (validatedDates[0] <= validatedDates[1]) {
-        return validatedDates;
-    } else {
-        throw ("Invalid date ranges: End Date: " + validatedDates[1] + "precedes Start Date: " + validatedDates[0]);
-    }
-}
-
-function makeQueries(dates, campaignNameContains, campaignNameDoesNotContain) {
+function makeQueries(campaignNameContains, campaignNameDoesNotContain) {
     var campaignNameContains = campaignNameContains.split(',').map(function (item) {
         return item.trim();
     });
@@ -220,7 +202,7 @@ function makeQueries(dates, campaignNameContains, campaignNameDoesNotContain) {
         return item.trim();
     });
     var campaignFilterQueries = makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotContain, ignorePausedCampaigns);
-    var combinedQueries = combineQueries(dates, campaignFilterQueries);
+    var combinedQueries = combineQueries(campaignFilterQueries);
     return combinedQueries;
 }
 
@@ -258,11 +240,12 @@ function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotC
 }
 
 
-function combineQueries(dates, campaignFilterQueries) {
+function combineQueries(campaignFilterQueries) {
     var combinedQueries = []
     for (var i = 0; i < campaignFilterQueries.length; i++) {
         combinedQueries.push(campaignFilterQueries[i]
-            .concat(" DURING " + dates[0] + "," + dates[1]));
+            .concat(" DURING " + "TODAY"));
+
     }
     return combinedQueries;
 }
