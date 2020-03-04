@@ -201,9 +201,9 @@ function makeQueries(campaignNameContains, campaignNameDoesNotContain) {
     var campaignNameDoesNotContain = campaignNameDoesNotContain.split(',').map(function (item) {
         return item.trim();
     });
-    var campaignFilterQueries = makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotContain, ignorePausedCampaigns);
-    var combinedQueries = combineQueries(campaignFilterQueries);
-    return combinedQueries;
+    var campaignFilterStatements = makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotContain, ignorePausedCampaigns);
+    var queries = addDateToStatements(campaignFilterStatements);
+    return queries;
 }
 
 function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotContain, ignorePausedCampaigns) {
@@ -240,11 +240,11 @@ function makeCampaignFilterStatements(campaignNameContains, campaignNameDoesNotC
 }
 
 
-function combineQueries(campaignFilterQueries) {
+function addDateToStatements(campaignFilterQueries) {
     var combinedQueries = []
     for (var i = 0; i < campaignFilterQueries.length; i++) {
         combinedQueries.push(campaignFilterQueries[i]
-            .concat(" DURING " + "TODAY"));
+            .concat(" DURING TODAY"));
 
     }
     return combinedQueries;
