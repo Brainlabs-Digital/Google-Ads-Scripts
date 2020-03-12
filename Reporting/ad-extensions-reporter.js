@@ -273,8 +273,6 @@ function main() {
             var disapprovalShortNames = [];
         } else {
             var disapprovalShortNames = JSON.parse(jsonDisapprovalShortNames);
-            Logger.log(disapprovalShortNames);
-            Logger.log(jsonDisapprovalShortNames);
         };
         if (jsonAttributeValuesByExtensionType[placeholderTypeId].indexOf(jsonAttributeValues) === -1) {
             jsonAttributeValuesByExtensionType[placeholderTypeId].push(jsonAttributeValues);
