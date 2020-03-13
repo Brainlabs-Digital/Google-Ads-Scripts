@@ -18,15 +18,14 @@ var spreadsheetUrl = "https://docs.google.com/YOUR-SPREADSHEET-URL-HERE";
 var includeExtensionsWithZeroImpressions = true;
 // Keep as true if you also want to see the extensions that aren't being shown. This is the default,
 // and recommended if you are using this script to get an overview of all the extensions in your account.
-// In accounts with a very large number of extensions, this script is too slow. If that is the case
-// for your account, you can change this variable's value to false to speed it up. That will exclude
-// extensions with no impressions today.
+// (In accounts with a very large number of extensions, this script is too slow, so you can change this to 
+// false to speed it up. That will exclude extensions with no impressions today.)
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Variables used to get what each ID in the report refers to. Current as of March 2020.
 
-// Attribute IDs
+// Placeholder Tables (mapping for Attribute IDs)
 var sitelink = {
     name: 'Sitelink',
     1: 'TEXT',
@@ -180,7 +179,7 @@ var promotion = {
     14: 'FINAL URL SUFFIX'
 }
 
-var extensionPlaceholderTypeIdToFieldIdsObjectMapping = {
+var extensionTypeToPlaceholderTables = {
     1: sitelink,
     2: call,
     3: app,
@@ -202,17 +201,17 @@ function main() {
     var sheets = spreadsheet.getSheets();
 
     Logger.log("Preparing spreadsheet");
-    try {
-        allExtensionsSheet = spreadsheet.getSheetByName("All Extensions").clear();
-    } catch (e) {
+    var allExtensionsSheet = spreadsheet.getSheetByName("All Extensions");
+    if (allExtensionsSheet === null) {
         allExtensionsSheet = spreadsheet.insertSheet("All Extensions");
     }
+    allExtensionsSheet.clear();
 
-    var extensionTabNames = Object.keys(extensionPlaceholderTypeIdToFieldIdsObjectMapping).map(
-        function (key) { return extensionPlaceholderTypeIdToFieldIdsObjectMapping[key].name }
+    var extensionNames = Object.keys(extensionTypeToPlaceholderTables).map(
+        function (key) { return extensionTypeToPlaceholderTables[key].name }
     )
     for (var i = 0, n = sheets.length; i < n; i++) {
-        if (extensionTabNames.indexOf(sheets[i].getName()) !== -1) {
+        if (extensionNames.indexOf(sheets[i].getName()) !== -1) {
             spreadsheet.deleteSheet(sheets[i]);
         }
     }
@@ -245,99 +244,78 @@ function main() {
 
     // Process report data, to prepare for outputting to the spreadsheet
     Logger.log("Processing report data");
-    var extensionPlaceholderTypeIds = Object.keys(extensionPlaceholderTypeIdToFieldIdsObjectMapping);
 
-    var extensionTypeFeedItemCounts = {};
-    for (var i = 0, n = extensionPlaceholderTypeIds.length; i < n; i++) {
-        extensionTypeFeedItemCounts[extensionPlaceholderTypeIds[i]] = 0;
-    }
-    var jsonAttributeValuesByExtensionType = {};
-    var disapprovalShortNamesByExtensionType = {};
-    var duplicateAttributeValuesCounts = {};
-
+    var extensionsByType = {};
     while (reportRows.hasNext()) {
         var row = reportRows.next();
 
         var placeholderTypeId = row['PlaceholderType']
-        if (extensionPlaceholderTypeIds.indexOf(placeholderTypeId) === -1) {
+        if (!(placeholderTypeId in extensionTypeToPlaceholderTables)) {
             continue;
         }
-        if (Object.keys(jsonAttributeValuesByExtensionType).indexOf(placeholderTypeId) === -1) {
-            jsonAttributeValuesByExtensionType[placeholderTypeId] = [];
-            disapprovalShortNamesByExtensionType[placeholderTypeId] = [];
+        if (!(placeholderTypeId in extensionsByType)) {
+            extensionsByType[placeholderTypeId] = {};
         }
 
-        var jsonAttributeValues = row['AttributeValues'];
-        var jsonDisapprovalShortNames = row['DisapprovalShortNames'];
-        if ('' === jsonDisapprovalShortNames.toString()) {
-            var disapprovalShortNames = [];
+        var jsonAttributes = row['AttributeValues'];
+        var jsonDisapprovalNames = row['DisapprovalShortNames'];
+        if ('' === jsonDisapprovalNames.toString()) {
+            var disapprovalNames = [];
         } else {
-            var disapprovalShortNames = JSON.parse(jsonDisapprovalShortNames);
+            var disapprovalNames = JSON.parse(jsonDisapprovalNames);
         };
-        if (jsonAttributeValuesByExtensionType[placeholderTypeId].indexOf(jsonAttributeValues) === -1) {
-            jsonAttributeValuesByExtensionType[placeholderTypeId].push(jsonAttributeValues);
-            disapprovalShortNamesByExtensionType[placeholderTypeId].push(disapprovalShortNames);
+        if (!(jsonAttributes in extensionsByType[placeholderTypeId])) {
+            extensionsByType[placeholderTypeId][jsonAttributes] = {};
+            extensionsByType[placeholderTypeId][jsonAttributes]['Disapprovals'] = disapprovalNames;
+            extensionsByType[placeholderTypeId][jsonAttributes]['FeedItemCount'] = 1;
         } else {
-            if (Object.keys(duplicateAttributeValuesCounts).indexOf(jsonAttributeValues) === -1) {
-                duplicateAttributeValuesCounts[jsonAttributeValues] = 2;
-            } else {
-                duplicateAttributeValuesCounts[jsonAttributeValues] += 1;
-            };
-            for (var i = 0, n = disapprovalShortNames.length; i < n; i++) {
-                var disapprovalName = disapprovalShortNames[i];
-                if (disapprovalShortNamesByExtensionType[placeholderTypeId][
-                    jsonAttributeValuesByExtensionType[placeholderTypeId].indexOf(jsonAttributeValues)
-                ].indexOf(disapprovalName) === -1) {
-                    disapprovalShortNamesByExtensionType[placeholderTypeId][
-                        jsonAttributeValuesByExtensionType[placeholderTypeId].indexOf(jsonAttributeValues)
-                    ] = disapprovalShortNamesByExtensionType[placeholderTypeId][
-                        jsonAttributeValuesByExtensionType[placeholderTypeId].indexOf(jsonAttributeValues)
-                    ].concat(disapprovalName);
+            extensionsByType[placeholderTypeId][jsonAttributes]['FeedItemCount'] += 1;
+            for (var i = 0, n = disapprovalNames.length; i < n; i++) {
+                var disapprovalName = disapprovalNames[i];
+                var previouslyFoundDisapprovalNames = extensionsByType[placeholderTypeId][jsonAttributes]['Disapprovals'];
+                if (previouslyFoundDisapprovalNames.indexOf(disapprovalName) === -1) {
+                    extensionsByType[placeholderTypeId][jsonAttributes]['Disapprovals'] =
+                        previouslyFoundDisapprovalNames.concat(disapprovalName);
                 }
             }
         }
-        extensionTypeFeedItemCounts[placeholderTypeId] += 1;
     }
 
     // Create a spreadsheet tab for each extension type, and output its data
     Logger.log("Outputting data to spreadsheet");
-    for (var placeholderTypeId in jsonAttributeValuesByExtensionType) {
-        var placeholderTable = extensionPlaceholderTypeIdToFieldIdsObjectMapping[placeholderTypeId];
+    for (var placeholderTypeId in extensionsByType) {
+        var placeholderTable = extensionTypeToPlaceholderTables[placeholderTypeId];
         var orderedAttributeIds = Object.keys(placeholderTable).sort();
-        orderedAttributeIds.pop();
+        var nameIndex = orderedAttributeIds.indexOf('name');
+        orderedAttributeIds.splice(nameIndex, 1); // Remove 'name'
 
         var newSheet = spreadsheet.insertSheet(placeholderTable.name);
-        var headerRowValues = Object.keys(placeholderTable).sort().map(
-            function (attributeId) { return placeholderTable[attributeId] }
-        ).slice(0, -1);
+        var headerRowValues = orderedAttributeIds.map(
+            function (attributeId) { return placeholderTable[attributeId]; }
+        );
         headerRowValues.push("Feed Item Count", "Reasons for Disapproval");
         newSheet.appendRow(headerRowValues).getRange(1, 1, 1, headerRowValues.length).setWrap(true);
 
-        var jsonAttributeValuesArray = jsonAttributeValuesByExtensionType[placeholderTypeId];
-        disapprovalShortNamesToOutput = disapprovalShortNamesByExtensionType[placeholderTypeId];
+        var extensionsOfType = extensionsByType[placeholderTypeId];
         var sheetOutput = [];
-        for (var i = 0, n = jsonAttributeValuesArray.length; i < n; i++) {
-            var extensionJsonAttributeValues = jsonAttributeValuesArray[i];
-            var disapprovalShortNames = disapprovalShortNamesToOutput[i];
-            if (Object.keys(duplicateAttributeValuesCounts).indexOf(extensionJsonAttributeValues) !== -1) {
-                var feedItemCount = duplicateAttributeValuesCounts[extensionJsonAttributeValues];
-            } else {
-                var feedItemCount = 1;
-            }
-            var attributeValues = JSON.parse(extensionJsonAttributeValues);
+        for (var extension in extensionsOfType) {
+            var disapprovalNames = extensionsOfType[extension]['Disapprovals'];
+            var feedItemCount = extensionsOfType[extension]['FeedItemCount'];
+            var extensionAttributes = JSON.parse(extension);
             var rowValues = orderedAttributeIds.map(
                 function (attributeId) {
-                    if (attributeValues.hasOwnProperty(attributeId)) {
-                        return attributeValues[attributeId].toString();
+                    if (extensionAttributes.hasOwnProperty(attributeId)) {
+                        return extensionAttributes[attributeId].toString();
                     } else {
                         return '';
                     }
                 }
             );
-            rowValues.push(feedItemCount, disapprovalShortNames.join(','));
+            rowValues.push(feedItemCount, disapprovalNames.join(','));
             sheetOutput.push(rowValues);
         }
 
+        // Sort extension rows by Feed Item Count, the penultimate value in each row
         sheetOutput.sort(function (rowValuesA, rowValuesB) {
             if (parseInt(rowValuesA.slice(-2)) > parseInt(rowValuesB.slice(-2))) {
                 return -1;
@@ -352,10 +330,17 @@ function main() {
 
     // Output overall data to All Extensions tab
     allExtensionsSheet.appendRow(["Extension Type", "Feed Item Count"]);
-    var foundPlaceholderTypeIds = Object.keys(extensionTypeFeedItemCounts);
-    var overallPlaceholderUse = foundPlaceholderTypeIds.map(
+    var foundExtensionTypeIds = Object.keys(extensionsByType);
+    var overallExtensionUse = foundExtensionTypeIds.map(
         function (placeholderTypeId) {
-            return [extensionPlaceholderTypeIdToFieldIdsObjectMapping[placeholderTypeId].name, extensionTypeFeedItemCounts[placeholderTypeId]];
+            return [
+                extensionTypeToPlaceholderTables[placeholderTypeId].name,
+                Object.keys(extensionsByType[placeholderTypeId]).reduce(
+                    function (overallCount, extensionJson) {
+                        return overallCount + extensionsByType[placeholderTypeId][extensionJson]['FeedItemCount'];
+                    }, 0
+                )
+            ];
         }
     ).sort(
         function (a, b) {
@@ -368,9 +353,13 @@ function main() {
             }
         }
     );
-
-    var outputRange = allExtensionsSheet.getRange(2, 1, overallPlaceholderUse.length, 2);
-    outputRange.setValues(overallPlaceholderUse);
+    for (var placeholderTypeId in extensionTypeToPlaceholderTables) {
+        if (foundExtensionTypeIds.indexOf(placeholderTypeId) === -1) {
+            overallExtensionUse.push([extensionTypeToPlaceholderTables[placeholderTypeId].name, 0]);
+        }
+    }
+    var outputRange = allExtensionsSheet.getRange(2, 1, overallExtensionUse.length, 2);
+    outputRange.setValues(overallExtensionUse);
 
     Logger.log("Done");
 }
