@@ -198,23 +198,9 @@ var extensionTypeToPlaceholderTables = {
 
 function main() {
     var spreadsheet = checkSpreadsheet(spreadsheetUrl, "Output Spreadsheet");
-    var sheets = spreadsheet.getSheets();
 
     Logger.log("Preparing spreadsheet");
-    var allExtensionsSheet = spreadsheet.getSheetByName("All Extensions");
-    if (allExtensionsSheet === null) {
-        allExtensionsSheet = spreadsheet.insertSheet("All Extensions");
-    }
-    allExtensionsSheet.clear();
-
-    var extensionNames = Object.keys(extensionTypeToPlaceholderTables).map(
-        function (key) { return extensionTypeToPlaceholderTables[key].name }
-    )
-    for (var i = 0, n = sheets.length; i < n; i++) {
-        if (extensionNames.indexOf(sheets[i].getName()) !== -1) {
-            spreadsheet.deleteSheet(sheets[i]);
-        }
-    }
+    prepareSpreadsheet(spreadsheet);
 
     // Get report
     Logger.log("Getting report");
@@ -224,16 +210,8 @@ function main() {
         );
         impressionsCondition = '';
     } else {
-        if (includeExtensionsWithZeroImpressions === true) {
-            var impressionsCondition = '';
-        } else if (includeExtensionsWithZeroImpressions === false) {
-            var impressionsCondition = 'WHERE Impressions > 0 ';
-        } else {
-            throw ("Value of options variable includeExtensionsWithZeroImpressions must be a boolean, either true or false. " +
-                "Currently, it is: " + includeExtensionsWithZeroImpressions)
-        }
+        impressionsCondition = getZeroImpressionsCondition(includeExtensionsWithZeroImpressions);
     }
-
     var placeholderFeedItemReport = AdsApp.report(
         'SELECT PlaceholderType, AttributeValues, DisapprovalShortNames ' +
         'FROM PLACEHOLDER_FEED_ITEM_REPORT ' +
@@ -258,26 +236,15 @@ function main() {
         }
 
         var jsonAttributes = row['AttributeValues'];
-        var jsonDisapprovalNames = row['DisapprovalShortNames'];
-        if ('' === jsonDisapprovalNames.toString()) {
-            var disapprovalNames = [];
-        } else {
-            var disapprovalNames = JSON.parse(jsonDisapprovalNames);
-        };
+        var disapprovalNames = getDisapprovalNamesFromJson(row['DisapprovalShortNames']);
+
         if (!(jsonAttributes in extensionsByType[placeholderTypeId])) {
             extensionsByType[placeholderTypeId][jsonAttributes] = {};
             extensionsByType[placeholderTypeId][jsonAttributes]['Disapprovals'] = disapprovalNames;
             extensionsByType[placeholderTypeId][jsonAttributes]['FeedItemCount'] = 1;
         } else {
             extensionsByType[placeholderTypeId][jsonAttributes]['FeedItemCount'] += 1;
-            for (var i = 0, n = disapprovalNames.length; i < n; i++) {
-                var disapprovalName = disapprovalNames[i];
-                var previouslyFoundDisapprovalNames = extensionsByType[placeholderTypeId][jsonAttributes]['Disapprovals'];
-                if (previouslyFoundDisapprovalNames.indexOf(disapprovalName) === -1) {
-                    extensionsByType[placeholderTypeId][jsonAttributes]['Disapprovals'] =
-                        previouslyFoundDisapprovalNames.concat(disapprovalName);
-                }
-            }
+            updateDisapprovalNamesForExtension(disapprovalNames, extensionsByType[placeholderTypeId][jsonAttributes]);
         }
     }
 
@@ -286,8 +253,7 @@ function main() {
     for (var placeholderTypeId in extensionsByType) {
         var placeholderTable = extensionTypeToPlaceholderTables[placeholderTypeId];
         var orderedAttributeIds = Object.keys(placeholderTable).sort();
-        var nameIndex = orderedAttributeIds.indexOf('name');
-        orderedAttributeIds.splice(nameIndex, 1); // Remove 'name'
+        removeNameFromArray(orderedAttributeIds);
 
         var newSheet = spreadsheet.insertSheet(placeholderTable.name);
         var headerRowValues = orderedAttributeIds.map(
@@ -301,16 +267,7 @@ function main() {
         for (var extension in extensionsOfType) {
             var disapprovalNames = extensionsOfType[extension]['Disapprovals'];
             var feedItemCount = extensionsOfType[extension]['FeedItemCount'];
-            var extensionAttributes = JSON.parse(extension);
-            var rowValues = orderedAttributeIds.map(
-                function (attributeId) {
-                    if (extensionAttributes.hasOwnProperty(attributeId)) {
-                        return extensionAttributes[attributeId].toString();
-                    } else {
-                        return '';
-                    }
-                }
-            );
+            var rowValues = getExtensionAttributes(extension, orderedAttributeIds);
             rowValues.push(feedItemCount, disapprovalNames.join(','));
             sheetOutput.push(rowValues);
         }
@@ -329,7 +286,106 @@ function main() {
     }
 
     // Output overall data to All Extensions tab
+    var allExtensionsSheet = spreadsheet.getSheetByName("All Extensions");
     allExtensionsSheet.appendRow(["Extension Type", "Feed Item Count"]);
+    var overallExtensionUse = getOverallExtensionUse(extensionsByType, extensionTypeToPlaceholderTables);
+    var outputRange = allExtensionsSheet.getRange(2, 1, overallExtensionUse.length, 2);
+    outputRange.setValues(overallExtensionUse);
+
+    Logger.log("Done");
+}
+
+// Check the spreadsheet URL has been entered, and that it works
+function checkSpreadsheet(spreadsheetUrl, spreadsheetName) {
+    if (spreadsheetUrl.replace(/[AEIOU]/g, "X") == "https://docs.google.com/YXXR-SPRXXDSHXXT-XRL-HXRX") {
+        throw ("Problem with " + spreadsheetName + " URL: make sure you've replaced the default with a valid spreadsheet URL.");
+    }
+    try {
+        var spreadsheet = SpreadsheetApp.openByUrl(spreadsheetUrl);
+
+        // Checks if you can edit the spreadsheet
+        var sheet = spreadsheet.getSheets()[0];
+        var sheetName = sheet.getName();
+        sheet.setName(sheetName);
+
+        return spreadsheet;
+    } catch (e) {
+        throw ("Problem with " + spreadsheetName + " URL: '" + e + "'");
+    }
+}
+
+// Make sure there is a cleared "All Extensions" sheet
+// and delete any sheets with the names of extension types
+function prepareSpreadsheet(spreadsheet) {
+    var allExtensionsSheet = spreadsheet.getSheetByName("All Extensions");
+    if (allExtensionsSheet === null) {
+        allExtensionsSheet = spreadsheet.insertSheet("All Extensions");
+    }
+    allExtensionsSheet.clear();
+
+    var extensionNames = Object.keys(extensionTypeToPlaceholderTables).map(
+        function (key) { return extensionTypeToPlaceholderTables[key].name }
+    )
+    var sheets = spreadsheet.getSheets();
+    for (var i = 0, n = sheets.length; i < n; i++) {
+        if (extensionNames.indexOf(sheets[i].getName()) !== -1) {
+            spreadsheet.deleteSheet(sheets[i]);
+        }
+    }
+}
+
+// Get an expression for filtering out zero impressions extensions if desired
+function getZeroImpressionsCondition(includeExtensionsWithZeroImpressions) {
+    if (includeExtensionsWithZeroImpressions === true) {
+        return '';
+    } else if (includeExtensionsWithZeroImpressions === false) {
+        return 'WHERE Impressions > 0 ';
+    } else {
+        throw ("Value of options variable includeExtensionsWithZeroImpressions must be a boolean, either true or false. " +
+            "Currently, it is: " + includeExtensionsWithZeroImpressions)
+    }
+}
+
+function getDisapprovalNamesFromJson(jsonDisapprovalNames) {
+    if ('' === jsonDisapprovalNames.toString()) {
+        return [];
+    } else {
+        return JSON.parse(jsonDisapprovalNames);
+    };
+}
+
+// Add any names it doesn't already have to the extension's disapproval names
+function updateDisapprovalNamesForExtension(newDisapprovalNames, extension) {
+    for (var i = 0, n = newDisapprovalNames.length; i < n; i++) {
+        var disapprovalName = newDisapprovalNames[i];
+        var previouslyFoundDisapprovalNames = extension['Disapprovals'];
+        if (previouslyFoundDisapprovalNames.indexOf(disapprovalName) === -1) {
+            extension['Disapprovals'] =
+                previouslyFoundDisapprovalNames.concat(disapprovalName);
+        }
+    }
+}
+
+function removeNameFromArray(arrayWithNameKey) {
+    var nameIndex = arrayWithNameKey.indexOf('name');
+    arrayWithNameKey.splice(nameIndex, 1);
+}
+
+function getExtensionAttributes(extensionJson, orderedAttributeIds) {
+    var parsedExtension = JSON.parse(extensionJson);
+    return orderedAttributeIds.map(
+        function (attributeId) {
+            if (parsedExtension.hasOwnProperty(attributeId)) {
+                return parsedExtension[attributeId].toString();
+            } else {
+                return '';
+            }
+        }
+    );
+}
+
+// Get an array of [ExtensionTypeName, OverallFeedItemCount] pairs
+function getOverallExtensionUse(extensionsByType, extensionTypeToPlaceholderTables) {
     var foundExtensionTypeIds = Object.keys(extensionsByType);
     var overallExtensionUse = foundExtensionTypeIds.map(
         function (placeholderTypeId) {
@@ -358,27 +414,5 @@ function main() {
             overallExtensionUse.push([extensionTypeToPlaceholderTables[placeholderTypeId].name, 0]);
         }
     }
-    var outputRange = allExtensionsSheet.getRange(2, 1, overallExtensionUse.length, 2);
-    outputRange.setValues(overallExtensionUse);
-
-    Logger.log("Done");
-}
-
-// Check the spreadsheet URL has been entered, and that it works
-function checkSpreadsheet(spreadsheetUrl, spreadsheetName) {
-    if (spreadsheetUrl.replace(/[AEIOU]/g, "X") == "https://docs.google.com/YXXR-SPRXXDSHXXT-XRL-HXRX") {
-        throw ("Problem with " + spreadsheetName + " URL: make sure you've replaced the default with a valid spreadsheet URL.");
-    }
-    try {
-        var spreadsheet = SpreadsheetApp.openByUrl(spreadsheetUrl);
-
-        // Checks if you can edit the spreadsheet
-        var sheet = spreadsheet.getSheets()[0];
-        var sheetName = sheet.getName();
-        sheet.setName(sheetName);
-
-        return spreadsheet;
-    } catch (e) {
-        throw ("Problem with " + spreadsheetName + " URL: '" + e + "'");
-    }
+    return overallExtensionUse;
 }
