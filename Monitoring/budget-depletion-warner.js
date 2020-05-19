@@ -13,20 +13,20 @@ function main() {
   // 'key terms' in the name.
   // Leave as [] to not exclude any campaigns.
 
-  var WARNING_PERCENTAGE_CAP = -1;  
-  // The percentage of a campaign's budget that needs to have been spent for 
-  // the tool to consider that campaign over cap and warn about it. 
+  var WARNING_PERCENTAGE_CAP = -1;
+  // The percentage of a campaign's budget that needs to have been spent for
+  // the tool to consider that campaign over cap and warn about it.
 
-  var EMAILS = ['']; 
+  var EMAILS = [''];
   // The email address you want the hourly update to be sent to.
   // If you'd like to send to multiple addresses then have them separated by commas,
   // for example ["aa@example.com", "bb@example.com"]
 
   try {
-    var campaigns = getCampaigns(CAMPAIGN_NAME_CONTAINS, CAMPAIGN_NAME_EXCLUDES);  
+    var campaigns = getCampaigns(CAMPAIGN_NAME_CONTAINS, CAMPAIGN_NAME_EXCLUDES);
     var overCap = getOverCap(WARNING_PERCENTAGE_CAP, campaigns);
     alert(overCap, EMAILS);
-  } catch(e) {
+  } catch (e) {
     alertError(e, EMAILS);
   }
 }
@@ -48,19 +48,19 @@ function getCampaigns(campNameContains, campNameExcludes) {
   return campaigns;
 }
 
-function buildWhereStatements(campNameContains, campNameExlcudes) {
+function buildWhereStatements(campNameContains, campNameExcludes) {
   var whereStatement = "WHERE CampaignStatus IN ['ENABLED','PAUSED'] ";
-  for (var i = 0; i < campNameExlcudes.length; i++) {
-    whereStatement += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" 
-    + campNameExlcudes[i].replace(/"/g,'\\\"') + "' ";
+  for (var i = 0; i < campNameExcludes.length; i++) {
+    whereStatement += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '"
+      + campNameExcludes[i].replace(/"/g, '\\\"') + "' ";
   }
   var whereStatementsArray = [];
   if (campNameContains.length == 0) {
     whereStatementsArray = [whereStatement];
   } else {
     for (var i = 0; i < campNameContains.length; i++) {
-      whereStatementsArray.push(whereStatement + 'AND CampaignName CONTAINS_IGNORE_CASE "' 
-      + campNameContains[i].replace(/"/g,'\\\"') + '" ');
+      whereStatementsArray.push(whereStatement + 'AND CampaignName CONTAINS_IGNORE_CASE "'
+        + campNameContains[i].replace(/"/g, '\\\"') + '" ');
     }
   }
   return whereStatementsArray;
@@ -69,21 +69,21 @@ function buildWhereStatements(campNameContains, campNameExlcudes) {
 function campaignFromRow(reportRow) {
   var obj = {};
   obj.id = reportRow["CampaignId"];
-  obj.name = reportRow["CampaignName"]; 
-  obj.budget = reportRow["Amount"]; 
+  obj.name = reportRow["CampaignName"];
+  obj.budget = reportRow["Amount"];
   obj.spend = reportRow["Cost"];
-  obj.spent = function() {
-    return 100 * (1 - (obj.budget - obj.spend)/obj.budget);
+  obj.spent = function () {
+    return 100 * (1 - (obj.budget - obj.spend) / obj.budget);
   }
-  obj.overSpendCap = function(cap) {
+  obj.overSpendCap = function (cap) {
     return (obj.spent() > cap);
   }
   return obj;
 }
 
 function getOverCap(cap, campaigns) {
-  var overCap = []; 
-  for (var campaignId in campaigns) { 
+  var overCap = [];
+  for (var campaignId in campaigns) {
     var campaign = campaigns[campaignId];
     if (campaign.overSpendCap(cap)) {
       overCap.push(campaign);
@@ -95,9 +95,9 @@ function getOverCap(cap, campaigns) {
 function alert(campaigns, EMAILS) {
   var subject = AdWordsApp.currentAccount().getName() + " - Budgets Nearly Spent";
   var message = buildTable(campaigns);
-  
+
   MailApp.sendEmail({
-    to: EMAILS.join(','), 
+    to: EMAILS.join(','),
     subject: subject,
     htmlBody: message
   });

@@ -16,11 +16,11 @@
 
 var domainName = "brainlabsdigital.com";
 // The domain you expect to be in all your keyword and ad URLs.
-// Can be a whole URL (www.brainlabsdigital.com) or a partial URL 
+// Can be a whole URL (www.brainlabsdigital.com) or a partial URL
 // (brainlabsdigital.com) to cover multiple subdomains.
 
 var isWholeDomainName = true;
-// If the domain name you gave is a whole URL, set this to true. Otherwise, 
+// If the domain name you gave is a whole URL, set this to true. Otherwise,
 // leave it as false.
 
 var targetSheetUrl = "https://docs.google.com/YOUR-SPREADSHEET-URL-HERE";
@@ -29,8 +29,8 @@ var targetSheetUrl = "https://docs.google.com/YOUR-SPREADSHEET-URL-HERE";
 
 var campaignNameContains = [];
 // Use this if you only want to look at some campaigns.
-// For example ["Generic"] would only look at campaigns with 'generic' in the 
-// name, while ["Generic", "Competitor"] would only look at campaigns with 
+// For example ["Generic"] would only look at campaigns with 'generic' in the
+// name, while ["Generic", "Competitor"] would only look at campaigns with
 // either 'generic' or 'competitor' in the name.
 // Leave as [] to include all campaigns.
 
@@ -54,14 +54,14 @@ function main() {
   // Escape any special characters in the given domain name.
   prepareDomainName();
   Logger.log("Prepared domain name for checking.");
-  
+
   // Fetch the URLs of keywords and ads attached to valid campaigns, filtering
   // out those with the correct domain name.
   var urlData = getUrlData();
   Logger.log("Fetched all URLs.");
-  
+
   var numberOfBadUrls = Object.keys(urlData).length;
-  
+
   if (numberOfBadUrls === 0) {
     Logger.log("No incorrect URLs found.");
   } else {
@@ -69,7 +69,7 @@ function main() {
     outputToSheet(urlData);
     Logger.log("Output " + numberOfBadUrls + " incorrect URLs to sheet.");
   }
-  
+
   Logger.log("Finished.");
 }
 
@@ -86,14 +86,14 @@ function getUrlData() {
   var urlData = new Object();
   var expectedPattern = /./;
   var whereStatements = ["Status = 'ENABLED'",
-                         "AdGroupStatus = 'ENABLED'"
-                        ];
+    "AdGroupStatus = 'ENABLED'"
+  ];
   if (ignorePausedCampaigns) {
     whereStatements.push("CampaignStatus IN ['ENABLED']");
   } else {
     whereStatements.push("CampaignStatus IN ['ENABLED','PAUSED']");
   }
-  
+
   if (isWholeDomainName) {
     expectedPattern = new RegExp("^https?://" + domainName);
   } else {
@@ -102,12 +102,12 @@ function getUrlData() {
   if (campaignNameContains.length == 0) {
     campaignNameContains.push(false);
   }
-  
+
   for (var i = 0; i < campaignNameDoesNotContain.length; i++) {
-    whereStatements.push("CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" 
-                         + campaignNameDoesNotContain[i].replace(/"/g,'\\\"') + "'");
+    whereStatements.push("CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '"
+      + campaignNameDoesNotContain[i].replace(/"/g, '\\\"') + "'");
   }
-  
+
   for (var i = 0; i < campaignNameContains.length; i++) {
     if (campaignNameContains[i] === false) {
       var finalWhereStatements = whereStatements;
@@ -116,74 +116,76 @@ function getUrlData() {
         ["CampaignName CONTAINS_IGNORE_CASE '" + campaignNameContains[i] + "'"]
       );
     }
-    
+
     var keywordReport = AdWordsApp.report(
       "SELECT CampaignName, AdGroupName, Criteria, FinalMobileUrls, FinalUrls " +
       "FROM KEYWORDS_PERFORMANCE_REPORT " +
       "WHERE FinalUrls != '--' AND " + finalWhereStatements.join(" AND "));
-    
+
     var rows = keywordReport.rows();
     while (rows.hasNext()) {
       var row = rows.next();
       var urls = jsonToArray(row['FinalMobileUrls']).concat(
         jsonToArray(row['FinalUrls'])
       );
-      
+
       for (var j in urls) {
         var url = urls[j].toLowerCase();
         if (url.match(expectedPattern) === null) {
-          var rowData = {"CampaignName": row['CampaignName'],
-                         "AdGroupName": row['AdGroupName'],
-                         "Keyword": row['Criteria']
-                        };
+          var rowData = {
+            "CampaignName": row['CampaignName'],
+            "AdGroupName": row['AdGroupName'],
+            "Keyword": row['Criteria']
+          };
           if (!urlData.hasOwnProperty(url)) {
-            urlData[url] = {"keywords": {}, "ads": {}};
+            urlData[url] = { "keywords": {}, "ads": {} };
           }
           urlData[url]["keywords"][row['Id']] = rowData;
         }
       }
     }
-    
+
     var adReport = AdWordsApp.report(
       "SELECT CampaignName, AdGroupName, HeadlinePart1, HeadlinePart2, " +
       "CreativeFinalMobileUrls, CreativeFinalUrls " +
       "FROM AD_PERFORMANCE_REPORT " +
-      "WHERE CreativeFinalUrls != '--' AND " 
+      "WHERE CreativeFinalUrls != '--' AND "
       + finalWhereStatements.join(" AND "));
-    
+
     var rows = adReport.rows();
-    
+
     while (rows.hasNext()) {
       var row = rows.next();
       var urls = jsonToArray(row['CreativeFinalMobileUrls']).concat(
         jsonToArray(row['CreativeFinalUrls'])
       );
-      
+
       for (var j in urls) {
         var url = urls[j].toLowerCase();
         if (url.match(expectedPattern) === null) {
-          var rowData = {"CampaignName": row['CampaignName'],
-                         "AdGroupName": row['AdGroupName'],
-                         "Headline": row['HeadlinePart1'] + " - " 
-                         + row['HeadlinePart2']
-                        };
+          var rowData = {
+            "CampaignName": row['CampaignName'],
+            "AdGroupName": row['AdGroupName'],
+            "Headline": row['HeadlinePart1'] + " - "
+              + row['HeadlinePart2']
+          };
           if (!urlData.hasOwnProperty(url)) {
-            urlData[url] = {"keywords": {}, "ads": {}};
+            urlData[url] = { "keywords": {}, "ads": {} };
           }
           urlData[url]["ads"][rowData['Headline']] = rowData;
         }
       }
     }
-    
-    whereStatements.push("CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" 
-                         + campaignNameContains[i] + "'");
+
+    whereStatements.push("CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '"
+      + campaignNameContains[i] + "'");
   }
-  
+
   return urlData;
 }
 
 
-// This function outputs details about any invalid URLs to the given Google 
+// This function outputs details about any invalid URLs to the given Google
 // Sheet.
 function outputToSheet(urlData) {
   var ss = checkSpreadsheet(targetSheetUrl, "the spreadsheet");
@@ -197,29 +199,29 @@ function outputToSheet(urlData) {
   }
   keywordsSheet.clear();
   adsSheet.clear();
-  
+
   var keywordsRange = [["Bad URL", "Keyword", "Ad Group", "Campaign"]];
   var adsRange = [["Bad URL", "Ad Headline", "Ad Group", "Campaign"]];
   for (var url in urlData) {
     for (var j in urlData[url]["keywords"]) {
       var data = urlData[url]["keywords"][j];
-      keywordsRange.push([url, 
-                          data["Keyword"], 
-                          data["AdGroupName"], 
-                          data["CampaignName"]]);
+      keywordsRange.push([url,
+        data["Keyword"],
+        data["AdGroupName"],
+        data["CampaignName"]]);
     }
-    
+
     for (var j in urlData[url]["ads"]) {
       var data = urlData[url]["ads"][j];
-      adsRange.push([url, 
-                     data["Headline"], 
-                     data["AdGroupName"], 
-                     data["CampaignName"]]);
+      adsRange.push([url,
+        data["Headline"],
+        data["AdGroupName"],
+        data["CampaignName"]]);
     }
   }
-  
-  keywordsSheet.getRange(1,1,keywordsRange.length,4).setValues(keywordsRange);
-  adsSheet.getRange(1,1,adsRange.length,4).setValues(adsRange);
+
+  keywordsSheet.getRange(1, 1, keywordsRange.length, 4).setValues(keywordsRange);
+  adsSheet.getRange(1, 1, adsRange.length, 4).setValues(adsRange);
 }
 
 
@@ -231,19 +233,19 @@ function jsonToArray(str) {
 
 // Check the spreadsheet URL has been entered, and that it works
 function checkSpreadsheet(spreadsheetUrl, spreadsheetName) {
-  if (spreadsheetUrl.replace(/[AEIOU]/g,"X") == "https://docs.google.com/YXXR-SPRXXDSHXXT-XRL-HXRX") {
-    throw("Problem with " + spreadsheetName + " URL: make sure you've replaced the default with a valid spreadsheet URL.");
+  if (spreadsheetUrl.replace(/[AEIOU]/g, "X") == "https://docs.google.com/YXXR-SPRXXDSHXXT-XRL-HXRX") {
+    throw ("Problem with " + spreadsheetName + " URL: make sure you've replaced the default with a valid spreadsheet URL.");
   }
   try {
     var spreadsheet = SpreadsheetApp.openByUrl(spreadsheetUrl);
-    
+
     // Checks if you can edit the spreadsheet
     var sheet = spreadsheet.getSheets()[0];
     var sheetName = sheet.getName();
     sheet.setName(sheetName);
-    
+
     return spreadsheet;
   } catch (e) {
-    throw("Problem with " + spreadsheetName + " URL: '" + e + "'");
+    throw ("Problem with " + spreadsheetName + " URL: '" + e + "'");
   }
 }

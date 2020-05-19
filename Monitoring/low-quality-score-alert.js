@@ -54,7 +54,7 @@ function main() {
 
   var mutations = [
     {
-      enabled: PAUSE_KEYWORDS, 
+      enabled: PAUSE_KEYWORDS,
       callback: function (keyword) {
         keyword.pause();
       }
@@ -69,7 +69,7 @@ function main() {
     }
   ];
 
-  var chunkSize = 10000; 
+  var chunkSize = 10000;
   var chunkedKeywords = chunkList(keywords, chunkSize);
 
   Logger.log("Making changes to keywords..");
@@ -89,8 +89,8 @@ function findKeywordsWithQSBelow(threshold) {
   var query = 'SELECT Id, AdGroupId, CampaignName, AdGroupName, Criteria, QualityScore, Labels'
     + ' FROM KEYWORDS_PERFORMANCE_REPORT WHERE Status = "ENABLED" AND CampaignStatus = "ENABLED" AND AdGroupStatus = "ENABLED"'
     + ' AND HasQualityScore = "TRUE" AND QualityScore <= ' + threshold;
-  var report = AdWordsApp.report(query);      
-  var rows = report.rows();    
+  var report = AdWordsApp.report(query);
+  var rows = report.rows();
 
   var lowQSKeywords = [];
   while (rows.hasNext()) {
@@ -104,7 +104,7 @@ function findKeywordsWithQSBelow(threshold) {
       qualityScore: row['QualityScore']
     };
     lowQSKeywords.push(lowQSKeyword);
-  } 
+  }
   return lowQSKeywords;
 }
 
@@ -127,14 +127,14 @@ function mutateKeywords(keywords, mutations) {
   });
 
   var mutationsToApply = getMutationsToApply(mutations);
-  var adwordsKeywords = AdWordsApp.keywords().withIds(keywordIds).get(); 
+  var adwordsKeywords = AdWordsApp.keywords().withIds(keywordIds).get();
 
   var i = 0;
   while (adwordsKeywords.hasNext()) {
     var currentKeywordLabels = keywords[i]['labels'];
     var adwordsKeyword = adwordsKeywords.next();
 
-    mutationsToApply.forEach(function(mutate) {
+    mutationsToApply.forEach(function (mutate) {
       mutate(adwordsKeyword, currentKeywordLabels);
     });
     i++;
@@ -144,23 +144,23 @@ function mutateKeywords(keywords, mutations) {
 function getMutationsToApply(mutations) {
   var enabledMutations = mutations.filter(function (mutation) {
     return mutation['enabled'];
-  });  
+  });
 
   return enabledMutations.map(function (condition) {
-      return condition['callback'];
+    return condition['callback'];
   });
 }
 
 function sendEmail(keywords) {
   var subject = "Low Quality Keywords Paused";
   var htmlBody =
-      "<p>Keywords with a quality score of less than " + QS_THRESHOLD + "found.<p>"
-      + "<p>Actions Taken:<p>"
-      + "<ul>"
-      + "<li><b>Paused</b>: " + PAUSE_KEYWORDS + "</li>"
-      + "<li><b>Labelled</b> with <code>" + LOW_QS_LABEL_NAME + "</code>: " + LABEL_KEYWORDS + "</li>"
-      + "</ul>" 
-      + renderTable(keywords);
+    "<p>Keywords with a quality score of less than " + QS_THRESHOLD + "found.<p>"
+    + "<p>Actions Taken:<p>"
+    + "<ul>"
+    + "<li><b>Paused</b>: " + PAUSE_KEYWORDS + "</li>"
+    + "<li><b>Labelled</b> with <code>" + LOW_QS_LABEL_NAME + "</code>: " + LABEL_KEYWORDS + "</li>"
+    + "</ul>"
+    + renderTable(keywords);
 
   MailApp.sendEmail({
     to: EMAIL_ADDRESSES.join(","),
@@ -171,21 +171,21 @@ function sendEmail(keywords) {
 
 function renderTable(keywords) {
   var header = '<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">'
-  + '<thead><tr>'
-  + '<th>Campaign Name</th>'
-  + '<th>Ad Group Name</th>'
-  + '<th>Keyword Text</th>'
-  + '<th>Quality Score</th>'
-  + '</tr></thead><tbody>';
+    + '<thead><tr>'
+    + '<th>Campaign Name</th>'
+    + '<th>Ad Group Name</th>'
+    + '<th>Keyword Text</th>'
+    + '<th>Quality Score</th>'
+    + '</tr></thead><tbody>';
 
-  var rows = keywords.reduce(function(accumulator, keyword) {
+  var rows = keywords.reduce(function (accumulator, keyword) {
     return accumulator
       + '<tr><td>' + [
-      keyword['campaignName'],
-      keyword['adGroupName'],
-      keyword['keywordText'],
-      keyword['qualityScore']
-    ].join('</td><td>')
+        keyword['campaignName'],
+        keyword['adGroupName'],
+        keyword['keywordText'],
+        keyword['qualityScore']
+      ].join('</td><td>')
       + '</td></tr>';
   }, "");
 

@@ -1,7 +1,7 @@
 /**
  *
  * This tool prevents your account from underspending by enabling a set of
- * labeled keywords when the account's spending is below budget.
+ * labelled keywords when the account's spending is below budget.
  * If the account begins to spend over budget, these keywords are paused.
  *
  */
@@ -56,7 +56,7 @@ function main() {
     "23": 1.00
   };
   // The proportion of the budget that should have been spent by the end of each hour.
-  // The values are cummulative, Start: 00:00-00:59; end: 23:00-23:59.
+  // The values are cumulative, Start: 00:00-00:59; end: 23:00-23:59.
   // The default values give a linear spread of ad spend throughout the day.
 
   //////////////   End of Options   /////////////////
@@ -74,7 +74,7 @@ function main() {
     var targetProportion = getTargetSpendProportion(hourlyTargets, today, timeZone);
     var currentProportion = getCurrentSpendProportion(budget);
 
-    Logger.log("Current spend is " + (currentProportion*100) + "% of the budget, target spend is " + (targetProportion*100) + "%");
+    Logger.log("Current spend is " + (currentProportion * 100) + "% of the budget, target spend is " + (targetProportion * 100) + "%");
 
     if (currentProportion > targetProportion + tolerance) {
       Logger.log("Keywords with label " + extraKeywordsLabel + " will be paused");
@@ -83,7 +83,7 @@ function main() {
       Logger.log("Keywords with label " + extraKeywordsLabel + " will be enabled");
       changeKeywordsStatus(extraKeywordsLabel, "ENABLED", emails, targetProportion, currentProportion);
     } else {
-        Logger.log("Spending is within an acceptable range. No actions.");
+      Logger.log("Spending is within an acceptable range. No actions.");
     }
 
   } catch (e) {
@@ -99,12 +99,12 @@ function main() {
 function changeKeywordsStatus(label, newStatus, emails, targetProportion, currentProportion) {
   var changed = false;
   var keywords = AdsApp.keywords()
-      .withCondition("LabelNames CONTAINS_ALL ['" + label + "']")
-      .get();
-      if (keywords.totalNumEntities() === 0) {
-  	  throw new Error("No keywords were found with the label " + label);
-      }
-  while(keywords.hasNext()) {
+    .withCondition("LabelNames CONTAINS_ALL ['" + label + "']")
+    .get();
+  if (keywords.totalNumEntities() === 0) {
+    throw new Error("No keywords were found with the label " + label);
+  }
+  while (keywords.hasNext()) {
     var keyword = keywords.next();
     if (newStatus === "PAUSED") {
       changed = pauseKeyword(keyword);
@@ -119,19 +119,19 @@ function changeKeywordsStatus(label, newStatus, emails, targetProportion, curren
         recipients,
         "Keywords " + newStatus.toLowerCase() + " in your account",
         "Keywords with label " + label + " have been " + newStatus.toLowerCase()
-          + " as it is the start of the day."
+        + " as it is the start of the day."
       );
     } else {
       var percentagePointsDifference = (targetProportion - currentProportion) * 100;
       percentagePointsDifference = percentagePointsDifference.toFixed(1);
       var subject = "Keywords " + newStatus.toLowerCase() + " in your account";
-      var message = "Your account has spent " + (currentProportion*100) + "% of its budget.\nThis is ";
+      var message = "Your account has spent " + (currentProportion * 100) + "% of its budget.\nThis is ";
       if (percentagePointsDifference > 0) {
         message += percentagePointsDifference + " percentage points below ";
       } else {
-        message += (percentagePointsDifference*-1) + " percentage points above ";
+        message += (percentagePointsDifference * -1) + " percentage points above ";
       }
-      message += " the target of " + (targetProportion*100) + "%\n"
+      message += " the target of " + (targetProportion * 100) + "%\n"
         + "Keywords with label " + label + " have been " + newStatus.toLowerCase() + ".\n";
       MailApp.sendEmail(recipients, subject, message);
     }
@@ -181,7 +181,7 @@ function getTargetSpendProportion(hourlyTargets, date, timeZone) {
   if (start > end) {
     throw new Error(
       "Hourly targets are not cumulative. "
-        + "Target at " + (hours - 1) + " is higher than target at " + hours + "."
+      + "Target at " + (hours - 1) + " is higher than target at " + hours + "."
     );
   }
   var proportionOfHour = minutes / 60;

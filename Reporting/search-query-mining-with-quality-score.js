@@ -2,7 +2,7 @@
  *
  * Search Query Mining With Quality Score Tool
  *
- * This script calculates the contribution of each word or phrase found in the 
+ * This script calculates the contribution of each word or phrase found in the
  * search query report and outputs a report into a Google Doc spreadsheet.
  *
  * Version: 1.0
@@ -41,14 +41,14 @@ function main() {
 
     var checkNegatives = true;
     // Set this to true to remove queries that would be excluded by your negative keywords.
-    
+
     var spreadsheetUrl = "https://docs.google.com/YOUR-SPREADSHEET-URL-HERE";
     // The URL of the Google Doc the results will be put into.
 
     var minNGramLength = 1;
     var maxNGramLength = 2;
     // The word length of phrases to be checked.
-    // For example if minNGramLength is 1 and maxNGramLength is 3, 
+    // For example if minNGramLength is 1 and maxNGramLength is 3,
     // phrases made of 1, 2 and 3 words will be checked.
     // Change both min and max to 1 to just look at single words.
 
@@ -542,7 +542,7 @@ function main() {
                     }
                 }
 
-                // Add the quality score 
+                // Add the quality score
                 var qualityScoreResult = DEFAULT_QUALITY_SCORE;
 
                 try {
@@ -578,7 +578,7 @@ function main() {
                             qualityScoreResult += allBroadKeywords[k][1];
                         }
                     }
-                } catch (error) {}
+                } catch (error) { }
 
                 if (qualityScoreResult !== DEFAULT_QUALITY_SCORE) {
                     if (broadCounter === 1) {
@@ -627,7 +627,7 @@ function main() {
                 }
             }
 
-            // Add the quality score 
+            // Add the quality score
             var qualityScoreResult = DEFAULT_QUALITY_SCORE;
             if (qualityScoresTotal[n] != undefined &&
                 qualityScoresTotal[n][nGram] != undefined
@@ -705,7 +705,7 @@ function main() {
             }
         }
 
-        // Loop through all total n grams 
+        // Loop through all total n grams
         var qualityScoreResult = DEFAULT_QUALITY_SCORE;
         if (qualityScoresWordCount.hasOwnProperty(wordLength)) {
             var totalQualityScore = qualityScoresWordCount[wordLength]["totalQualityScore"];
@@ -873,7 +873,7 @@ function generateAverageQualityScore(minNGramLength, maxNGramLength, dateRange) 
     // Iterate over exact/phrase/broad Keywords
     var rows = awql.rows();
 
-    // Broad KWs. 
+    // Broad KWs.
     while (rows.hasNext()) {
         var row = rows.next();
         var campaignName = row["CampaignName"];
@@ -904,11 +904,11 @@ function generateAverageQualityScore(minNGramLength, maxNGramLength, dateRange) 
                 wordObject[currentWord] = true;
             }
 
-            // Ag Group N Gram Broad 
+            // Ag Group N Gram Broad
             initialiseIfNotExists(adGroupNGramsBroad, campaignName, {});
             initialiseIfNotExists(adGroupNGramsBroad[campaignName], adGroupName, {});
             initialiseIfNotExists(adGroupNGramsBroad[campaignName][adGroupName], words.length, []);
-            // Campaign N Gram Broad 
+            // Campaign N Gram Broad
             initialiseIfNotExists(campaignNGramsBroad, campaignName, {});
             initialiseIfNotExists(campaignNGramsBroad[campaignName], words.length, []);
             // Total N Gram Broad

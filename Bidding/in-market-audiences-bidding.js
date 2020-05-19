@@ -89,9 +89,9 @@ function getAdGroupPerformance() {
 function getEntityPerformance(entityIdFieldName, reportName) {
   var performance = {};
   var query = "SELECT " + entityIdFieldName + ", CostPerAllConversion " +
-      "FROM " + reportName + " " +
-      "WHERE Impressions > " + String(MINIMUM_IMPRESSIONS) + " " +
-      "DURING " + DATE_RANGE;
+    "FROM " + reportName + " " +
+    "WHERE Impressions > " + String(MINIMUM_IMPRESSIONS) + " " +
+    "DURING " + DATE_RANGE;
   var rows = AdsApp.report(query).rows();
 
   while (rows.hasNext()) {
@@ -113,7 +113,7 @@ function makeAllOperations(
 
   var filteredCampaigns =
     filterEntitiesBasedOnDateAndImpressions(allCampaigns)
-    .get();
+      .get();
 
   while (filteredCampaigns.hasNext()) {
     var campaign = filteredCampaigns.next();
@@ -131,7 +131,7 @@ function makeAllOperations(
     } else {
       var adGroups =
         filterEntitiesBasedOnDateAndImpressions(campaign.adGroups())
-        .get();
+          .get();
 
       while (adGroups.hasNext()) {
         var adGroup = adGroups.next();
@@ -150,15 +150,15 @@ function makeAllOperations(
 }
 
 function filterCampaignsBasedOnName(campaigns) {
-  CAMPAIGN_NAME_DOES_NOT_CONTAIN.forEach(function(part) {
+  CAMPAIGN_NAME_DOES_NOT_CONTAIN.forEach(function (part) {
     campaigns = campaigns.withCondition(
-      "CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" + part.replace(/"/g,'\\\"') + "'"
+      "CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" + part.replace(/"/g, '\\\"') + "'"
     );
   });
 
-  CAMPAIGN_NAME_CONTAINS.forEach(function(part) {
+  CAMPAIGN_NAME_CONTAINS.forEach(function (part) {
     campaigns = campaigns.withCondition(
-      "CampaignName CONTAINS_IGNORE_CASE '" + part.replace(/"/g,'\\\"') + "'"
+      "CampaignName CONTAINS_IGNORE_CASE '" + part.replace(/"/g, '\\\"') + "'"
     );
   });
 
@@ -172,8 +172,8 @@ function filterEntitiesBasedOnDateAndImpressions(selector) {
 }
 
 function makeOperationsFromEntity(entity, entityCpa, audienceMapping) {
-    var entityAudiences = getAudiencesFromEntity(entity, audienceMapping);
-    return makeOperations(entityCpa, entityAudiences);
+  var entityAudiences = getAudiencesFromEntity(entity, audienceMapping);
+  return makeOperations(entityCpa, entityAudiences);
 }
 
 function getAudiencesFromEntity(entity, audienceMapping) {
@@ -203,7 +203,7 @@ function isAudienceInMarketAudience(audience, inMarketIds) {
 
 function makeOperations(entityCpa, audiences) {
   var operations = [];
-  audiences.forEach(function(audience) {
+  audiences.forEach(function (audience) {
     var stats = audience.getStatsFor(DATE_RANGE);
     var conversions = stats.getConversions();
     if (conversions > 0) {
@@ -224,16 +224,16 @@ function makeOperations(entityCpa, audiences) {
 
 function campaignHasAnyCampaignLevelAudiences(campaign) {
   var totalNumEntities = campaign
-  .targeting()
-  .audiences()
-  .get()
-  .totalNumEntities();
+    .targeting()
+    .audiences()
+    .get()
+    .totalNumEntities();
 
   return totalNumEntities > 0;
 }
 
 function applyBids(operations) {
-  operations.forEach(function(operation) {
+  operations.forEach(function (operation) {
     operation.audience.bidding().setBidModifier(operation.modifier);
   });
 }

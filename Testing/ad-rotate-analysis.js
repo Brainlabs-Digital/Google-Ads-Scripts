@@ -197,7 +197,7 @@ function checkFieldNames(allowedFields, givenFields) {
 
   if (unrecognisedFields.length > 0) {
     throw unrecognisedFields.length + " field(s) not recognised: '" + unrecognisedFields.join("', '")
-      + "'. Please choose from '" + allowedFields.join("', '") + "'.";
+    + "'. Please choose from '" + allowedFields.join("', '") + "'.";
   }
 
   return wantedFields;
@@ -362,9 +362,9 @@ function rotateAnalysis(campaignIds, sheets, metrics) {
   ].concat(metrics.map(function (a) {
     return 'Actual ' + a.replace(/([A-Z])/g, ' $&').trim();
   }), ['Actual ' + winningMetricName],
-  metrics.map(function (a) {
-    return 'Possible ' + a.replace(/([A-Z])/g, ' $&').trim();
-  }));
+    metrics.map(function (a) {
+      return 'Possible ' + a.replace(/([A-Z])/g, ' $&').trim();
+    }));
 
   sheets['All Device Ads'].appendRow(headers);
   sheets['All Device Ads'].getRange('R' + sheets['All Device Ads'].getLastRow() + 'C1:R' + sheets['All Device Ads'].getLastRow() + 'C' + headers.length).setFontWeight('bold');

@@ -24,7 +24,7 @@ var makeChanges = false;
 // Leave as "" to not send any emails
 var emailAddresses = "";
 
-// The tool will only compare keywords with search queries 
+// The tool will only compare keywords with search queries
 // that have received over this many impressions.
 var impressionsThreshold = 0;
 
@@ -33,20 +33,20 @@ var impressionsThreshold = 0;
 
 function main() {
   var campaignIds = getCampaignIds();
-  
+
   var queries = getSearchQueries(campaignIds);
   var keywords = getKeywords(campaignIds);
-    
+
   Logger.log("Computing negatives to add");
   var newNegatives = [];
   for (var i = 0; i < campaignIds.length; i++) {
-    var campaignId = campaignIds[i];  
+    var campaignId = campaignIds[i];
     var campaignNewNegatives = computeCampaignNegatives(queries[campaignId], keywords[campaignId]);
     newNegatives = newNegatives.concat(campaignNewNegatives);
   }
 
   sortByEntities(newNegatives);
-  
+
   if (makeChanges) {
     addNewNegatives(newNegatives);
   }
@@ -57,19 +57,19 @@ function getCampaignIds() {
   var whereStatement = "";
   var whereStatementsArray = [];
   var campaignIds = [];
-  
-  for (var i=0; i<campaignNameDoesNotContain.length; i++) {
-    whereStatement += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" + campaignNameDoesNotContain[i].replace(/"/g,'\\\"') + "' ";
+
+  for (var i = 0; i < campaignNameDoesNotContain.length; i++) {
+    whereStatement += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" + campaignNameDoesNotContain[i].replace(/"/g, '\\\"') + "' ";
   }
-  
+
   if (campaignNameContains.length == 0) {
     whereStatementsArray = [whereStatement];
   } else {
     for (var i = 0; i < campaignNameContains.length; i++) {
-      whereStatementsArray.push(whereStatement + 'AND CampaignName CONTAINS_IGNORE_CASE "' + campaignNameContains[i].replace(/"/g,'\\\"') + '" ');
+      whereStatementsArray.push(whereStatement + 'AND CampaignName CONTAINS_IGNORE_CASE "' + campaignNameContains[i].replace(/"/g, '\\\"') + '" ');
     }
   }
-  
+
   for (var i = 0; i < whereStatementsArray.length; i++) {
     var campaignReport = AdsApp.report(
       "SELECT CampaignId " +
@@ -77,36 +77,36 @@ function getCampaignIds() {
       "WHERE  CampaignStatus = ENABLED " +
       whereStatementsArray[i] +
       "DURING LAST_30_DAYS");
-    
+
     var rows = campaignReport.rows();
     while (rows.hasNext()) {
       var row = rows.next();
       campaignIds.push(row['CampaignId']);
     }
   }
-  
+
   if (campaignIds.length == 0) {
-    throw("No campaigns found with the given settings.");
+    throw ("No campaigns found with the given settings.");
   }
-  
+
   Logger.log(campaignIds.length + " campaigns were found.");
   return campaignIds;
 }
 
-function getSearchQueries(campaignIds) { 
+function getSearchQueries(campaignIds) {
   var report = AdsApp.report(
     "SELECT Query, AdGroupId, CampaignId, AdGroupName, CampaignName " +
     "FROM SEARCH_QUERY_PERFORMANCE_REPORT " +
-    "WHERE CampaignId IN [" + campaignIds.join(",") + "] " + 
-    "AND AdGroupStatus = 'ENABLED' " + 
-    "AND Impressions >= " + impressionsThreshold + " " + 
+    "WHERE CampaignId IN [" + campaignIds.join(",") + "] " +
+    "AND AdGroupStatus = 'ENABLED' " +
+    "AND Impressions >= " + impressionsThreshold + " " +
     "DURING LAST_30_DAYS");
-  
-  var queries = {}; 
+
+  var queries = {};
   for (var i = 0; i < campaignIds.length; i++) {
     queries[campaignIds[i]] = [];
   }
-  
+
   var rows = report.rows();
   while (rows.hasNext()) {
     var row = rows.next();
@@ -122,32 +122,32 @@ function getSearchQueries(campaignIds) {
 }
 
 function getKeywords(campaignIds) {
- var report = AdsApp.report(
-  "SELECT AdGroupId, Id, CampaignId, Criteria " +
-  "FROM KEYWORDS_PERFORMANCE_REPORT " +
-  "WHERE CampaignId IN [" + campaignIds.join(",") + "] " +
-  "AND Status = 'ENABLED' " +
-  "AND KeywordMatchType IN [BROAD, PHRASE] " +
-  "DURING LAST_30_DAYS");
-  
+  var report = AdsApp.report(
+    "SELECT AdGroupId, Id, CampaignId, Criteria " +
+    "FROM KEYWORDS_PERFORMANCE_REPORT " +
+    "WHERE CampaignId IN [" + campaignIds.join(",") + "] " +
+    "AND Status = 'ENABLED' " +
+    "AND KeywordMatchType IN [BROAD, PHRASE] " +
+    "DURING LAST_30_DAYS");
+
   var keywords = {};
   for (var i = 0; i < campaignIds.length; i++) {
     keywords[campaignIds[i]] = [];
   }
-    
+
   var rows = report.rows();
   while (rows.hasNext()) {
     var row = rows.next();
-    var keyword = {};    
+    var keyword = {};
     keyword.id = row["Id"];
     keyword.adgroupId = row["AdGroupId"];
     keyword.campaignId = row["CampaignId"];
     keyword.criteria = cleanKeywordText(row["Criteria"]);
-    
+
     if (typeof keywords[keyword.campaignId][keyword.adgroupId] == 'undefined') {
       keywords[keyword.campaignId][keyword.adgroupId] = [];
     }
-    
+
     keywords[keyword.campaignId][keyword.adgroupId].push(keyword);
   }
   return keywords;
@@ -160,16 +160,16 @@ function cleanKeywordText(rawText) {
 function computeCampaignNegatives(queries, keywords) {
   var newNegatives = [];
   var adgroupIds = Object.keys(keywords);
-  
+
   for (var i = 0; i < adgroupIds.length; i++) {
     var adgroupId = adgroupIds[i];
     var adgroupKeywords = keywords[adgroupId];
     for (var j = 0; j < adgroupKeywords.length; j++) {
       var keyword = adgroupKeywords[j];
       for (var k = 0; k < queries.length; k++) {
-        var query = queries[k]; 
+        var query = queries[k];
         var queryAdgroupKeywords = keywords[query.adgroupId];
-        if (wantToAddNegative(query, keyword, queryAdgroupKeywords)) {   
+        if (wantToAddNegative(query, keyword, queryAdgroupKeywords)) {
           var newNegative = {};
           newNegative.campaignId = keyword.campaignId;
           newNegative.adgroupId = query.adgroupId;
@@ -177,11 +177,11 @@ function computeCampaignNegatives(queries, keywords) {
           newNegative.campaignName = query.campaignName;
           newNegative.text = keyword.criteria;
           newNegatives.push(newNegative);
-        } 
+        }
       }
     }
   }
-  return newNegatives; 
+  return newNegatives;
 }
 
 function wantToAddNegative(query, keyword, queryAdgroupKeywords) {
@@ -205,14 +205,14 @@ function textSimilar(base, compare) {
 function queryKeywordsContainKeyword(keywords, potentialNegative) {
   for (var i = 0; i < keywords.length; i++) {
     if (textSimilar(keywords[i].criteria, potentialNegative)) {
-        return true;
+      return true;
     }
   }
   return false;
 }
 
 function sortByEntities(newNegatives) {
-  newNegatives.sort(function (a, b) {   
+  newNegatives.sort(function (a, b) {
     return a.campaignId - b.campaignId || a.adgroupId - b.adgroupId;
   });
 }
@@ -222,7 +222,7 @@ function addNewNegatives(newNegatives) {
   var chunks = chunkNewNegatives(newNegatives);
   for (var i = 0; i < chunks.length; i++) {
     var chunk = chunks[i];
-    var adgroups = AdsApp.adGroups().withIds(Object.keys(chunk)).get(); 
+    var adgroups = AdsApp.adGroups().withIds(Object.keys(chunk)).get();
     while (adgroups.hasNext()) {
       var adgroup = adgroups.next();
       var adgroupId = adgroup.getId();
@@ -257,13 +257,13 @@ function chunkNewNegatives(newNegatives) {
 function notify(newNegatives) {
   if (emailAddresses == "") {
     Logger.log("No email addresses given - not sending email.");
-  } else if(newNegatives.length == 0) {
-    Logger.log("No changes to email."); 
+  } else if (newNegatives.length == 0) {
+    Logger.log("No changes to email.");
   } else {
-    
+
     var attachments = [];
     attachments.push(createResultsCsv(newNegatives, "Ad-Group-Negatives.csv"));
-    
+
     if (!makeChanges || AdsApp.getExecutionInfo().isPreview()) {
       var verb = "would be";
     } else {
@@ -271,8 +271,8 @@ function notify(newNegatives) {
     }
     var subject = AdsApp.currentAccount().getName() + " - Making Phrase Match Exact - " + Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd");
     var body = "Please find attached a list of the " + newNegatives.length + " negative keywords that " + verb + " added to your account.";
-    
-    var options = {attachments: attachments};
+
+    var options = { attachments: attachments };
     MailApp.sendEmail(emailAddresses, subject, body, options);
   }
 }
@@ -284,9 +284,9 @@ function createResultsCsv(newNegatives, csvName) {
   for (var i = 0; i < newNegatives.length; i++) {
     var row = [];
     var newNegative = newNegatives[i];
-    row.push(newNegative.campaignName.replace(/"/g,'""'));
-    row.push(newNegative.adgroupName.replace(/"/g,'""'));
-    row.push(newNegative.text.replace(/"/g,'""'));
+    row.push(newNegative.campaignName.replace(/"/g, '""'));
+    row.push(newNegative.adgroupName.replace(/"/g, '""'));
+    row.push(newNegative.text.replace(/"/g, '""'));
     cells.push('"' + row.join('","') + '"');
   }
   return Utilities.newBlob("\ufeff" + cells.join("\n"), 'text/csv', csvName);

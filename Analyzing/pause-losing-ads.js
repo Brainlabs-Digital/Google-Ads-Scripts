@@ -2,7 +2,7 @@
  *
  * Pause Losing Ads & Ad Rotate Analysis
  *
- * This script finds the best ad in each ad group (subject to thresholds) and 
+ * This script finds the best ad in each ad group (subject to thresholds) and
  * calculates the performance you could have got if the impressions that went to
  * losing ads went to the winning ads instead.
  * Labels the winning and losing ads, and (optionally) pauses the losers.
@@ -117,14 +117,14 @@ function main() {
 
 // Check the spreadsheet URL has been entered, and that it works
 function checkSpreadsheet(spreadsheetUrl, spreadsheetName) {
-  if (spreadsheetUrl.replace(/[AEIOU]/g,"X") == "https://docs.google.com/YXXR-SPRXXDSHXXT-XRL-HXRX") {
-    throw("Problem with " + spreadsheetName + " URL: make sure you've replaced the default with a valid spreadsheet URL.");
+  if (spreadsheetUrl.replace(/[AEIOU]/g, "X") == "https://docs.google.com/YXXR-SPRXXDSHXXT-XRL-HXRX") {
+    throw ("Problem with " + spreadsheetName + " URL: make sure you've replaced the default with a valid spreadsheet URL.");
   }
   try {
     var spreadsheet = SpreadsheetApp.openByUrl(spreadsheetUrl);
     return spreadsheet;
   } catch (e) {
-    throw("Problem with " + spreadsheetName + " URL: '" + e + "'");
+    throw ("Problem with " + spreadsheetName + " URL: '" + e + "'");
   }
 }
 
@@ -141,19 +141,19 @@ function getCampaignIds() {
     whereStatement += "CampaignStatus IN ['ENABLED','PAUSED'] ";
   }
 
-  for (var i=0; i<campaignNameDoesNotContain.length; i++) {
-    whereStatement += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" + campaignNameDoesNotContain[i].replace(/"/g,'\\\"') + "' ";
+  for (var i = 0; i < campaignNameDoesNotContain.length; i++) {
+    whereStatement += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '" + campaignNameDoesNotContain[i].replace(/"/g, '\\\"') + "' ";
   }
 
   if (campaignNameContains.length == 0) {
     whereStatementsArray = [whereStatement];
   } else {
-    for (var i=0; i<campaignNameContains.length; i++) {
-      whereStatementsArray.push(whereStatement + 'AND CampaignName CONTAINS_IGNORE_CASE "' + campaignNameContains[i].replace(/"/g,'\\\"') + '" ');
+    for (var i = 0; i < campaignNameContains.length; i++) {
+      whereStatementsArray.push(whereStatement + 'AND CampaignName CONTAINS_IGNORE_CASE "' + campaignNameContains[i].replace(/"/g, '\\\"') + '" ');
     }
   }
 
-  for (var i=0; i<whereStatementsArray.length; i++) {
+  for (var i = 0; i < whereStatementsArray.length; i++) {
     var adTextReport = AdWordsApp.report(
       "SELECT CampaignId " +
       "FROM   CAMPAIGN_PERFORMANCE_REPORT " +
@@ -168,7 +168,7 @@ function getCampaignIds() {
   }
 
   if (campaignIds.length == 0) {
-    throw("No campaigns found with the given settings.");
+    throw ("No campaigns found with the given settings.");
   }
 
   Logger.log(campaignIds.length + " campaigns found");
@@ -179,12 +179,12 @@ function getCampaignIds() {
 // Verify that all field names are valid, and return a list of them with the
 // correct capitalisation
 function checkFieldNames(allowedFields, givenFields) {
-  var allowedFieldsLowerCase = allowedFields.map(function (str){return str.toLowerCase()});
+  var allowedFieldsLowerCase = allowedFields.map(function (str) { return str.toLowerCase() });
   var wantedFields = [];
   var unrecognisedFields = [];
-  for (var i=0; i<givenFields.length; i++) {
-    var fieldIndex = allowedFieldsLowerCase.indexOf(givenFields[i].toLowerCase().replace(" ","").trim());
-    if(fieldIndex === -1){
+  for (var i = 0; i < givenFields.length; i++) {
+    var fieldIndex = allowedFieldsLowerCase.indexOf(givenFields[i].toLowerCase().replace(" ", "").trim());
+    if (fieldIndex === -1) {
       unrecognisedFields.push(fields[i]);
     } else {
       wantedFields.push(allowedFields[fieldIndex]);
@@ -192,8 +192,8 @@ function checkFieldNames(allowedFields, givenFields) {
   }
 
   if (unrecognisedFields.length > 0) {
-    throw unrecognisedFields.length + " field(s) not recognised: '" + unrecognisedFields.join("', '") + 
-      "'. Please choose from '" + allowedFields.join("', '") + "'.";
+    throw unrecognisedFields.length + " field(s) not recognised: '" + unrecognisedFields.join("', '") +
+    "'. Please choose from '" + allowedFields.join("', '") + "'.";
   }
 
   return wantedFields;
@@ -213,7 +213,7 @@ function getFormats(metrics) {
   metricFormats["Cost"] = currencySymbol + "#,###,##0.00";
 
   var formats = [];
-  for (var i=0; i<metrics.length; i++) {
+  for (var i = 0; i < metrics.length; i++) {
     if (metricFormats[metrics[i]] == undefined) {
       formats.push("#,###,##0");
     } else {
@@ -236,20 +236,20 @@ function printFormattedRows(sheet, rows, formatRow) {
 
     var lastRow = sheet.getLastRow();
 
-    sheet.getRange("R" + (lastRow + 1) + "C1:R" + (lastRow+rows.length)
-                   + "C" + (rows[0].length) ).setValues(rows);
-    sheet.getRange("R" + (lastRow + 1) + "C1:R" + (lastRow+rows.length)
-                   + "C" + (rows[0].length) ).clearFormat();
+    sheet.getRange("R" + (lastRow + 1) + "C1:R" + (lastRow + rows.length)
+      + "C" + (rows[0].length)).setValues(rows);
+    sheet.getRange("R" + (lastRow + 1) + "C1:R" + (lastRow + rows.length)
+      + "C" + (rows[0].length)).clearFormat();
     Logger.log("Printed " + rows.length + " rows in " + sheet.getName());
 
     if (formatRow.length > 0) {
       var formatRows = [];
-      for (var i=0; i<rows.length; i++) {
+      for (var i = 0; i < rows.length; i++) {
         formatRows.push(formatRow);
       }
 
-      sheet.getRange("R" + (lastRow + 1) + "C1:R" + (lastRow+formatRows.length)
-                     + "C" + (formatRows[0].length) ).setNumberFormats(formatRows);
+      sheet.getRange("R" + (lastRow + 1) + "C1:R" + (lastRow + formatRows.length)
+        + "C" + (formatRows[0].length)).setNumberFormats(formatRows);
     }
 
   } catch (e) {
@@ -270,7 +270,7 @@ function printFormattedRows(sheet, rows, formatRow) {
 // with the given title, headers and format
 function printRowsWithTitle(sheet, title, headers, rows, formatRow) {
   try {
-    sheet.getRange("R" + (sheet.getLastRow()+2) + "C1").setValue(title);
+    sheet.getRange("R" + (sheet.getLastRow() + 2) + "C1").setValue(title);
     sheet.getRange("R" + sheet.getLastRow() + "C1").clearFormat();
     sheet.getRange("R" + sheet.getLastRow() + "C1").setFontWeight("bold");
 
@@ -325,7 +325,7 @@ function rotateAnalysis(campaignIds, spreadsheet, metrics) {
     'AND Clicks >= ' + clickThreshold + ' ' +
     'AND CombinedApprovalStatus != DISAPPROVED ' +
     'AND AdType IN [TEXT_AD, EXPANDED_TEXT_AD] ' +
-        "AND AdGroupName = 'Performance Marketing Agency London' " + //!!!
+    "AND AdGroupName = 'Performance Marketing Agency London' " + //!!!
     'DURING ' + dateRange);
   var rows = adReport.rows();
   while (rows.hasNext()) {
@@ -338,7 +338,7 @@ function rotateAnalysis(campaignIds, spreadsheet, metrics) {
         // This happens the second time an ad group appears in the report
         groupsWithMultipleAds[row["AdGroupId"]] = true;
       }
-    } else { // These are mobile preferred ads. 
+    } else { // These are mobile preferred ads.
       // They are treated separately, as mobiles will perform differently to other devices
       if (groupsWithMobileImpressions[row["AdGroupId"]] == undefined) {
         groupsWithMobileImpressions[row["AdGroupId"]] = true;
@@ -353,23 +353,23 @@ function rotateAnalysis(campaignIds, spreadsheet, metrics) {
   var groupsWithMultipleMobileAdsCount = Object.keys(groupsWithMultipleMobileAds).length;
 
   if (groupsWithMultipleAdsCount == 0 && groupsWithMultipleMobileAdsCount == 0) {
-    Logger.log("No ad groups with more than 1 ad above the impression threshold of " + impressionThreshold + " in the given date range."); 
+    Logger.log("No ad groups with more than 1 ad above the impression threshold of " + impressionThreshold + " in the given date range.");
     return;
   }
 
   Logger.log("Found " + groupsWithMultipleAdsCount + " ad groups with multiple all device ads, and " +
-             groupsWithMultipleMobileAdsCount + " ad groups with multiple mobile preferred ads");
+    groupsWithMultipleMobileAdsCount + " ad groups with multiple mobile preferred ads");
 
   // Make all of the required sheets
-  var sheetNames = ["Overview","All Device Ads"];
+  var sheetNames = ["Overview", "All Device Ads"];
   if (groupsWithMultipleMobileAdsCount > 0) {
     sheetNames.push("Mobile Preferred Ads");
   }
   var sheets = {};
-  for (var i=0; i<sheetNames.length; i++) {
+  for (var i = 0; i < sheetNames.length; i++) {
     sheets[sheetNames[i]] = spreadsheet.getSheetByName(sheetNames[i]);
     if (sheets[sheetNames[i]] === null) {
-      sheets[sheetNames[i]] = spreadsheet.insertSheet(sheetNames[i],i);
+      sheets[sheetNames[i]] = spreadsheet.insertSheet(sheetNames[i], i);
     } else {
       sheets[sheetNames[i]].clear();
     }
@@ -387,14 +387,14 @@ function rotateAnalysis(campaignIds, spreadsheet, metrics) {
 function printDataIncludingMobileAds(sheets, metrics, groupsWithMultipleAds, groupsWithMultipleMobileAds) {
   // Now we go through the all device ads which have multiple ads over the impression threshold
   // and record the stats for all ads
-  var headers = ["Campaign","Ad Group","Number of Ads","Winning Ad","Winning Ad ID","Winning " + 
-                 winningMetricName].concat(metrics.map(function(a){return "Actual " + a.replace(/([A-Z])/g, ' $&').trim();}), ["Actual " + winningMetricName],
-                                           metrics.map(function(a){return "Possible " + a.replace(/([A-Z])/g, ' $&').trim();}));
+  var headers = ["Campaign", "Ad Group", "Number of Ads", "Winning Ad", "Winning Ad ID", "Winning " +
+    winningMetricName].concat(metrics.map(function (a) { return "Actual " + a.replace(/([A-Z])/g, ' $&').trim(); }), ["Actual " + winningMetricName],
+      metrics.map(function (a) { return "Possible " + a.replace(/([A-Z])/g, ' $&').trim(); }));
 
   sheets["All Device Ads"].appendRow(headers);
   sheets["All Device Ads"].getRange("R" + sheets["All Device Ads"].getLastRow() + "C1:R" + sheets["All Device Ads"].getLastRow() + "C" + headers.length).setFontWeight("bold");
   var metricFormats = getFormats(metrics);
-  var formatRow = ["#,###,##0","#,###,##0","#,###,##0","#,###,##0","#","#,##0.00%"].concat(metricFormats, ["#,##0.00%"], metricFormats);
+  var formatRow = ["#,###,##0", "#,###,##0", "#,###,##0", "#,###,##0", "#", "#,##0.00%"].concat(metricFormats, ["#,##0.00%"], metricFormats);
 
   var initialisedArray = []; // This will be copied whenever we need an array to store metrics in
   for (var i = 0; i < metrics.length; i++) {
@@ -410,15 +410,15 @@ function printDataIncludingMobileAds(sheets, metrics, groupsWithMultipleAds, gro
   // We get the data in batches of ad groups, so we don't run out of memory
   // and because reports can only take 10,000 IDs at once.
   var batchSize = 10000;
-  for (var i=0; i<allAdGroupIds.length; i+=batchSize) {
+  for (var i = 0; i < allAdGroupIds.length; i += batchSize) {
     // This function outputs the ad group level data, and returns a running total
     // of the stats and possible stats
-    allDeviceTotals = calculateAdGroupPotential(sheets["All Device Ads"], allAdGroupIds.slice(i,i+batchSize), metrics, formatRow, devicePreference, allDeviceTotals);
+    allDeviceTotals = calculateAdGroupPotential(sheets["All Device Ads"], allAdGroupIds.slice(i, i + batchSize), metrics, formatRow, devicePreference, allDeviceTotals);
   }
 
   // Sort the new rows in the spreadsheet
   if (sheets["All Device Ads"].getLastRow() > 1) {
-    sheets["All Device Ads"].getRange(2,1,sheets["All Device Ads"].getLastRow()-1,headers.length).sort({column: 7, ascending: false});
+    sheets["All Device Ads"].getRange(2, 1, sheets["All Device Ads"].getLastRow() - 1, headers.length).sort({ column: 7, ascending: false });
   }
 
   // Do the same for mobile preferred ads
@@ -429,15 +429,15 @@ function printDataIncludingMobileAds(sheets, metrics, groupsWithMultipleAds, gro
   mobilePreferredTotals['Possible'] = initialisedArray.slice();
   var devicePreference = '= "30001"';
   var allAdGroupIds = Object.keys(groupsWithMultipleMobileAds);
-  for (var i=0; i<allAdGroupIds.length; i+=batchSize) {
-    mobilePreferredTotals = calculateAdGroupPotential(sheets["Mobile Preferred Ads"], allAdGroupIds.slice(i,i+batchSize), metrics, formatRow, devicePreference, mobilePreferredTotals);
+  for (var i = 0; i < allAdGroupIds.length; i += batchSize) {
+    mobilePreferredTotals = calculateAdGroupPotential(sheets["Mobile Preferred Ads"], allAdGroupIds.slice(i, i + batchSize), metrics, formatRow, devicePreference, mobilePreferredTotals);
   }
   if (sheets["Mobile Preferred Ads"].getLastRow() > 1) {
-    sheets["Mobile Preferred Ads"].getRange(2,1,sheets["Mobile Preferred Ads"].getLastRow()-1,headers.length).sort({column: 7, ascending: false});
+    sheets["Mobile Preferred Ads"].getRange(2, 1, sheets["Mobile Preferred Ads"].getLastRow() - 1, headers.length).sort({ column: 7, ascending: false });
   }
 
   // Total the data
-  var total = {Actual: [], Possible: [], Difference: [], Percent: []};
+  var total = { Actual: [], Possible: [], Difference: [], Percent: [] };
   for (var i = 0; i < metrics.length; i++) {
     total['Actual'][i] = allDeviceTotals['Actual'][i] + mobilePreferredTotals['Actual'][i];
     total['Possible'][i] = allDeviceTotals['Possible'][i] + mobilePreferredTotals['Possible'][i];
@@ -447,7 +447,7 @@ function printDataIncludingMobileAds(sheets, metrics, groupsWithMultipleAds, gro
   var data = [allDeviceTotals['Actual'], allDeviceTotals['Possible'], mobilePreferredTotals['Actual'], mobilePreferredTotals['Possible'], total['Actual'], total['Possible']];
   var multiplierIndex = metrics.indexOf(winningMetricMultiplier);
   var divisorIndex = metrics.indexOf(winningMetricDivisor);
-  for (var i=0; i<data.length; i++) {
+  for (var i = 0; i < data.length; i++) {
     if (data[i][divisorIndex] != 0) {
       data[i].push(data[i][multiplierIndex] / data[i][divisorIndex]);
     } else {
@@ -458,7 +458,7 @@ function printDataIncludingMobileAds(sheets, metrics, groupsWithMultipleAds, gro
   // Calculate differences between actual and possible, and output an overview
   sheets["Overview"].appendRow(["Ad Rotate Analysis"]);
   sheets["Overview"].getRange("R1C1").setFontWeight("bold");
-  var headers = [""].concat(metrics.map(function(a){return a.replace(/([A-Z])/g, ' $&').trim();}), [winningMetricName]);
+  var headers = [""].concat(metrics.map(function (a) { return a.replace(/([A-Z])/g, ' $&').trim(); }), [winningMetricName]);
   var rowNames = ["Actual", "Possible", "Difference", "Percent"];
   var formatRow = ["#,###,##0"].concat(metricFormats, ["#,##0.00%"]);
 
@@ -479,17 +479,17 @@ function printDataIncludingMobileAds(sheets, metrics, groupsWithMultipleAds, gro
           data[j]['Percent'][i] = (data[j]['Difference'][i] / data[j]['Actual'][i]);
         } else {
           data[j]['Percent'][i] = "-";
-        } 
+        }
       }
     }
 
     var totalRows = [];
-    for (var r=0; r<rowNames.length; r++) {
+    for (var r = 0; r < rowNames.length; r++) {
       totalRows.push([rowNames[r]].concat(data[j][rowNames[r]]));
     }
     printRowsWithTitle(sheets["Overview"], dataNames[j], headers, totalRows, formatRow);
     sheets["Overview"].getRange("R" + sheets["Overview"].getLastRow() + "C1:R" + sheets["Overview"].getLastRow()
-                                + "C" + (headers.length) ).setNumberFormat("#,###,##0.00%"); // Format the percent line as percentages
+      + "C" + (headers.length)).setNumberFormat("#,###,##0.00%"); // Format the percent line as percentages
   }
 
 }
@@ -498,14 +498,14 @@ function printDataIncludingMobileAds(sheets, metrics, groupsWithMultipleAds, gro
 function printAllDeviceData(sheets, metrics, groupsWithMultipleAds) {
   // Now we go through the all device ads which have multiple ads over the impression threshold
   // and record the stats for all ads
-  var headers = ["Campaign","Ad Group","Number of Ads","Winning Ad","Winning Ad ID","Winning " + 
-                 winningMetricName].concat(metrics.map(function(a){return "Actual " + a.replace(/([A-Z])/g, ' $&').trim();}), ["Actual " + winningMetricName],
-                                           metrics.map(function(a){return "Possible " + a.replace(/([A-Z])/g, ' $&').trim();}));
+  var headers = ["Campaign", "Ad Group", "Number of Ads", "Winning Ad", "Winning Ad ID", "Winning " +
+    winningMetricName].concat(metrics.map(function (a) { return "Actual " + a.replace(/([A-Z])/g, ' $&').trim(); }), ["Actual " + winningMetricName],
+      metrics.map(function (a) { return "Possible " + a.replace(/([A-Z])/g, ' $&').trim(); }));
 
   sheets["All Device Ads"].appendRow(headers);
   sheets["All Device Ads"].getRange("R" + sheets["All Device Ads"].getLastRow() + "C1:R" + sheets["All Device Ads"].getLastRow() + "C" + headers.length).setFontWeight("bold");
   var metricFormats = getFormats(metrics);
-  var formatRow = ["#,###,##0","#,###,##0","#,###,##0","#,###,##0","#","#,##0.00%"].concat(metricFormats, ["#,##0.00%"], metricFormats);
+  var formatRow = ["#,###,##0", "#,###,##0", "#,###,##0", "#,###,##0", "#", "#,##0.00%"].concat(metricFormats, ["#,##0.00%"], metricFormats);
 
   var initialisedArray = []; // This will be copied whenever we need an array to store metrics in
   for (var i = 0; i < metrics.length; i++) {
@@ -521,22 +521,22 @@ function printAllDeviceData(sheets, metrics, groupsWithMultipleAds) {
   // We get the data in batches of ad groups, so we don't run out of memory
   // and because reports can only take 10,000 IDs at once.
   var batchSize = 10000;
-  for (var i=0; i<allAdGroupIds.length; i+=batchSize) {
+  for (var i = 0; i < allAdGroupIds.length; i += batchSize) {
     // This function outputs the ad group level data, and returns a running total
     // of the stats and possible stats
-    allDeviceTotals = calculateAdGroupPotential(sheets["All Device Ads"], allAdGroupIds.slice(i,i+batchSize), metrics, formatRow, devicePreference, allDeviceTotals);
+    allDeviceTotals = calculateAdGroupPotential(sheets["All Device Ads"], allAdGroupIds.slice(i, i + batchSize), metrics, formatRow, devicePreference, allDeviceTotals);
   }
 
   // Sort the new rows in the spreadsheet
   if (sheets["All Device Ads"].getLastRow() > 1) {
-    sheets["All Device Ads"].getRange(2,1,sheets["All Device Ads"].getLastRow()-1,headers.length).sort({column: 7, ascending: false});
+    sheets["All Device Ads"].getRange(2, 1, sheets["All Device Ads"].getLastRow() - 1, headers.length).sort({ column: 7, ascending: false });
   }
 
   // Calculate the average winning metric
   var data = [allDeviceTotals['Actual'], allDeviceTotals['Possible']];
   var multiplierIndex = metrics.indexOf(winningMetricMultiplier);
   var divisorIndex = metrics.indexOf(winningMetricDivisor);
-  for (var i=0; i<data.length; i++) {
+  for (var i = 0; i < data.length; i++) {
     if (data[i][divisorIndex] != 0) {
       data[i].push(data[i][multiplierIndex] / data[i][divisorIndex]);
     } else {
@@ -547,7 +547,7 @@ function printAllDeviceData(sheets, metrics, groupsWithMultipleAds) {
   // Calculate differences between actual and possible, and output an overview
   sheets["Overview"].appendRow(["Ad Rotate Analysis"]);
   sheets["Overview"].getRange("R1C1").setFontWeight("bold");
-  var headers = [""].concat(metrics.map(function(a){return a.replace(/([A-Z])/g, ' $&').trim();}), [winningMetricName]);
+  var headers = [""].concat(metrics.map(function (a) { return a.replace(/([A-Z])/g, ' $&').trim(); }), [winningMetricName]);
   var rowNames = ["Actual", "Possible", "Difference", "Percent"];
   var formatRow = ["#,###,##0"].concat(metricFormats, ["#,##0.00%"]);
 
@@ -566,16 +566,16 @@ function printAllDeviceData(sheets, metrics, groupsWithMultipleAds) {
           data[j]['Percent'][i] = (data[j]['Difference'][i] / data[j]['Actual'][i]);
         } else {
           data[j]['Percent'][i] = "-";
-        } 
+        }
       }
     }
     var totalRows = [];
-    for (var r=0; r<rowNames.length; r++) {
+    for (var r = 0; r < rowNames.length; r++) {
       totalRows.push([rowNames[r]].concat(data[j][rowNames[r]]));
     }
     printRowsWithTitle(sheets["Overview"], dataNames[j], headers, totalRows, formatRow);
     sheets["Overview"].getRange("R" + sheets["Overview"].getLastRow() + "C1:R" + sheets["Overview"].getLastRow()
-                                + "C" + (headers.length) ).setNumberFormat("#,###,##0.00%"); // Format the percent line as percentages
+      + "C" + (headers.length)).setNumberFormat("#,###,##0.00%"); // Format the percent line as percentages
   }
 
 }
@@ -613,7 +613,7 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
       // If this is the first time we've come across this ad group,
       // record its details
       groupData[row['AdGroupId']] = {};
-      groupData[row['AdGroupId']]['Names'] = [row['CampaignName'],row['AdGroupName']];
+      groupData[row['AdGroupId']]['Names'] = [row['CampaignName'], row['AdGroupName']];
       groupData[row['AdGroupId']]['Ads'] = [];
       groupData[row['AdGroupId']]['Total'] = initialisedArray.slice();
     }
@@ -626,9 +626,9 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
     }
 
     if (row['Headline'] == "") {
-      var adDetails = [row['HeadlinePart1'],row['HeadlinePart2'],row['Description']];
+      var adDetails = [row['HeadlinePart1'], row['HeadlinePart2'], row['Description']];
     } else {
-      var adDetails = [row['Headline'],row['Description1'],row['Description2']];
+      var adDetails = [row['Headline'], row['Description1'], row['Description2']];
     }
 
     if (adStats[divisorIndex] != 0) {
@@ -637,7 +637,7 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
       var winningMetric = 0;
     }
 
-    groupData[row['AdGroupId']]['Ads'].push([winningMetric,adStats,adDetails, row['Id']]);
+    groupData[row['AdGroupId']]['Ads'].push([winningMetric, adStats, adDetails, row['Id']]);
   }
 
   var outputRows = []; // This will be written to a spreadsheet at the end of the function.
@@ -646,7 +646,7 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
   var losingAdIds = [];
 
   // Go through the ad groups, find the best ad
-  for (var j=0; j<adGroupIds.length; j++) {
+  for (var j = 0; j < adGroupIds.length; j++) {
 
     var groupPotential = initialisedArray.slice();
     // This will be the stats you could have got if the impressions went to the best ad
@@ -655,7 +655,7 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
     var adsToCompare = groupData[adGroupIds[j]]['Ads']; // This is the list of ads
 
     // Order the ads from best to worst
-    adsToCompare.sort(function(a, b){return b[0]-a[0];});
+    adsToCompare.sort(function (a, b) { return b[0] - a[0]; });
 
     if (adsToCompare[0][0] == 0) {
       // This means the best ad's winning metric has a value of 0.
@@ -669,7 +669,7 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
       // of these ads
       var bestStats = adsToCompare[0][1];
       var notBestAdsIndex = null;
-      for (var a=1; a<adsToCompare.length; a++) {
+      for (var a = 1; a < adsToCompare.length; a++) {
         if (adsToCompare[0][0] == adsToCompare[a][0]) {
           for (var i = 0; i < metrics.length; i++) {
             bestStats[i] += adsToCompare[a][1][i];
@@ -684,12 +684,12 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
       }
 
       // Record the best ads' IDs
-      for (var a=0; a<notBestAdsIndex; a++) {
+      for (var a = 0; a < notBestAdsIndex; a++) {
         winningAdIds.push([adGroupIds[j], adsToCompare[a][3]]);
       }
 
       var groupPotential = bestStats.slice();
-      for (var n=notBestAdsIndex; n<adsToCompare.length; n++) {
+      for (var n = notBestAdsIndex; n < adsToCompare.length; n++) {
         for (var i = 0; i < metrics.length; i++) {
           groupPotential[i] += adsToCompare[n][1][impressionIndex] * bestStats[i] / bestStats[impressionIndex];
         }
@@ -700,11 +700,11 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
       // There's one ad which is the best.
       var bestStats = adsToCompare[0][1];
       winningAdIds.push([adGroupIds[j], adsToCompare[0][3]]);
-      for (var n=0; n<adsToCompare.length; n++) {
+      for (var n = 0; n < adsToCompare.length; n++) {
         for (var i = 0; i < metrics.length; i++) {
           groupPotential[i] += adsToCompare[n][1][impressionIndex] * bestStats[i] / bestStats[impressionIndex];
         }
-        if (n>0) {
+        if (n > 0) {
           losingAdIds.push([adGroupIds[j], adsToCompare[n][3]]);
         }
       }
@@ -749,11 +749,11 @@ function calculateAdGroupPotential(sheet, adGroupIds, metrics, formatRow, device
 
 // Applies a label to all ads with the given ids
 function applyLabelsToAds(ids, labelName) {
-  for (var i=0; i<ids.length; i += 5000) {
+  for (var i = 0; i < ids.length; i += 5000) {
     var iterator = AdWordsApp.ads()
-    .withIds(ids.slice(i, i+5000))
-    .get();
-    while (iterator.hasNext()){
+      .withIds(ids.slice(i, i + 5000))
+      .get();
+    while (iterator.hasNext()) {
       var ad = iterator.next();
       ad.applyLabel(labelName);
     }
@@ -763,11 +763,11 @@ function applyLabelsToAds(ids, labelName) {
 
 // Pauses all ads with the given ids
 function pauseAds(ids) {
-  for (var i=0; i<ids.length; i += 5000) {
+  for (var i = 0; i < ids.length; i += 5000) {
     var iterator = AdWordsApp.ads()
-    .withIds(ids.slice(i, i+5000))
-    .get();
-    while (iterator.hasNext()){
+      .withIds(ids.slice(i, i + 5000))
+      .get();
+    while (iterator.hasNext()) {
       var ad = iterator.next();
       ad.pause();
     }

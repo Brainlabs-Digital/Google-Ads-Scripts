@@ -297,8 +297,8 @@ function adTextChecking(campaignIds, sheet) {
 
         if (textFound.length > 0) {
           adsWithBadText.push([row.CampaignName, row.AdGroupName, row.Headline,
-            row.Description1, row.Description2, row.DisplayUrl,
-            textFound.join(', ')
+          row.Description1, row.Description2, row.DisplayUrl,
+          textFound.join(', ')
           ]);
         }
       } else {
@@ -306,8 +306,8 @@ function adTextChecking(campaignIds, sheet) {
 
         if (textFound.length > 0) {
           etasWithBadText.push([row.CampaignName, row.AdGroupName, row.HeadlinePart1,
-            row.HeadlinePart2, row.Description, row.Path1, row.Path2,
-            textFound.join(', ')
+          row.HeadlinePart2, row.Description, row.Path1, row.Path2,
+          textFound.join(', ')
           ]);
         }
       }
@@ -353,7 +353,7 @@ function adTextChecking(campaignIds, sheet) {
 
           if (textFound.length > 0) {
             sitelinksWithBadText.push([values['1'], removeUndefined(values['3']), removeUndefined(values['4']),
-              values['5'], textFound.join(', ')
+            values['5'], textFound.join(', ')
             ]);
           }
         }
@@ -427,8 +427,8 @@ function adSpellingChecking(campaignIds, sheet) {
 
         if (textFound.length > 0) {
           adsWithBadText.push([row.CampaignName, row.AdGroupName, row.Headline,
-            row.Description1, row.Description2, row.DisplayUrl,
-            textFound.join(', '), didYouMean.join(', ')
+          row.Description1, row.Description2, row.DisplayUrl,
+          textFound.join(', '), didYouMean.join(', ')
           ]);
         }
       } else {
@@ -436,8 +436,8 @@ function adSpellingChecking(campaignIds, sheet) {
 
         if (textFound.length > 0) {
           etasWithBadText.push([row.CampaignName, row.AdGroupName, row.HeadlinePart1,
-            row.HeadlinePart2, row.Description, row.Path1, row.Path2,
-            textFound.join(', '), didYouMean.join(', ')
+          row.HeadlinePart2, row.Description, row.Path1, row.Path2,
+          textFound.join(', '), didYouMean.join(', ')
           ]);
         }
       }
@@ -475,7 +475,7 @@ function adSpellingChecking(campaignIds, sheet) {
 
           if (textFound.length > 0) {
             sitelinksWithBadText.push([values['1'], removeUndefined(values['3']), removeUndefined(values['4']),
-              values['5'], textFound.join(', '), didYouMean.join(', ')
+            values['5'], textFound.join(', '), didYouMean.join(', ')
             ]);
           }
         }
