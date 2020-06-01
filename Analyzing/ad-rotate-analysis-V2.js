@@ -1,6 +1,6 @@
 /**
  *
- * Pause Losing Ads & Ad Rotate Analysis
+ * Ad Rotate Analysis & Pause Losing Ads
  *
  * This script finds the best ad in each ad group (subject to thresholds) and
  * calculates the performance you could have got if the impressions that went to
