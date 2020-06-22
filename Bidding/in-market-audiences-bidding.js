@@ -53,7 +53,7 @@ function main() {
   );
 
   Logger.log('Applying bids');
-  applyBids(operations);
+  applyBids(operations, audienceMapping);
 }
 
 function getInMarketAudienceMapping(downloadCsvUrl) {
@@ -125,7 +125,8 @@ function makeAllOperations(
       var operationsFromCampaign = makeOperationsFromEntity(
         campaign,
         campaignPerformance[campaign.getId()],
-        audienceMapping
+        audienceMapping,
+        "Campaign"
       );
 
       operations = operations.concat(operationsFromCampaign);
@@ -139,7 +140,8 @@ function makeAllOperations(
         var operationsFromAdGroup = makeOperationsFromEntity(
           adGroup,
           adGroupPerformance[adGroup.getId()],
-          audienceMapping
+          audienceMapping,
+          "Ad Group"
         );
 
         operations = operations.concat(operationsFromAdGroup);
@@ -172,9 +174,9 @@ function filterEntitiesBasedOnDateAndImpressions(selector) {
     .withCondition('Impressions > ' + String(MINIMUM_IMPRESSIONS));
 }
 
-function makeOperationsFromEntity(entity, entityCpa, audienceMapping) {
+function makeOperationsFromEntity(entity, entityCpa, audienceMapping, levelApplyingAt) {
   var entityAudiences = getAudiencesFromEntity(entity, audienceMapping);
-  return makeOperations(entityCpa, entityAudiences);
+  return makeOperations(entityCpa, entityAudiences, entity.getName(), levelApplyingAt);
 }
 
 function getAudiencesFromEntity(entity, audienceMapping) {
@@ -202,7 +204,7 @@ function isAudienceInMarketAudience(audience, inMarketIds) {
   return inMarketIds.indexOf(audience.getAudienceId()) > -1;
 }
 
-function makeOperations(entityCpa, audiences) {
+function makeOperations(entityCpa, audiences, entityName, entityType) {
   var operations = [];
   audiences.forEach(function (audience) {
     var stats = audience.getStatsFor(DATE_RANGE);
@@ -217,6 +219,8 @@ function makeOperations(entityCpa, audiences) {
       var operation = {};
       operation.audience = audience;
       operation.modifier = modifier;
+      operation.entityName = entityName;
+      operation.entityType = entityType;
 
       operations.push(operation);
     }
@@ -235,8 +239,12 @@ function campaignHasAnyCampaignLevelAudiences(campaign) {
   return totalNumEntities > 0;
 }
 
-function applyBids(operations) {
+function applyBids(operations, audienceMapping) {
   operations.forEach(function (operation) {
+    message = " - Updating " + operation.entityType + ": '" + operation.entityName + "'; "
+    message += "Audience: '" + audienceMapping[operation.audience.getAudienceId()] + "' "
+    message += "New Modifier: " + operation.modifier
+    Logger.log(message);
     operation.audience.bidding().setBidModifier(operation.modifier);
   });
 }
