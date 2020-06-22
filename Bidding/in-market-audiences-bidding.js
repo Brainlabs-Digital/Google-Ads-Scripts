@@ -211,6 +211,8 @@ function makeOperations(entityCpa, audiences) {
       var audienceCpa = stats.getCost() / stats.getConversions();
       entityCpa = parseFloat(entityCpa);
       var modifier = (entityCpa / audienceCpa);
+      // Google enforces minimum bid of -90% aka *0.1
+      if(modifier < 0.1) modifier = 0.1;
 
       var operation = {};
       operation.audience = audience;
