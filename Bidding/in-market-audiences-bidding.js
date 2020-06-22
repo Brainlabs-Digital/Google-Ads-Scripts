@@ -32,7 +32,7 @@ var CAMPAIGN_NAME_DOES_NOT_CONTAIN = [];
 // Leave as [] to include all campaigns.
 var CAMPAIGN_NAME_CONTAINS = [];
 
-var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = 'https://developers.google.com/adwords/api/docs/appendix/in-market_categories.csv';
+var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = 'https://developers.google.com/adwords/api/docs/appendix/in-market-categories.tsv';
 
 function main() {
   Logger.log('Getting audience mapping');
@@ -58,7 +58,8 @@ function main() {
 
 function getInMarketAudienceMapping(downloadCsvUrl) {
   var csv = Utilities.parseCsv(
-    UrlFetchApp.fetch(downloadCsvUrl).getContentText()
+    UrlFetchApp.fetch(downloadCsvUrl).getContentText(),
+    '\t'
   );
 
   var headers = csv[0];
