@@ -32,7 +32,7 @@ var CAMPAIGN_NAME_DOES_NOT_CONTAIN = [];
 // Leave as [] to include all campaigns.
 var CAMPAIGN_NAME_CONTAINS = [];
 
-var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = 'https://developers.google.com/adwords/api/docs/appendix/in-market_categories.csv';
+var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = 'https://developers.google.com/adwords/api/docs/appendix/in-market-categories.tsv';
 
 function main() {
   Logger.log('Getting audience mapping');
@@ -53,12 +53,13 @@ function main() {
   );
 
   Logger.log('Applying bids');
-  applyBids(operations);
+  applyBids(operations, audienceMapping);
 }
 
 function getInMarketAudienceMapping(downloadCsvUrl) {
   var csv = Utilities.parseCsv(
-    UrlFetchApp.fetch(downloadCsvUrl).getContentText()
+    UrlFetchApp.fetch(downloadCsvUrl).getContentText(),
+    '\t'
   );
 
   var headers = csv[0];
@@ -124,7 +125,8 @@ function makeAllOperations(
       var operationsFromCampaign = makeOperationsFromEntity(
         campaign,
         campaignPerformance[campaign.getId()],
-        audienceMapping
+        audienceMapping,
+        "Campaign"
       );
 
       operations = operations.concat(operationsFromCampaign);
@@ -138,7 +140,8 @@ function makeAllOperations(
         var operationsFromAdGroup = makeOperationsFromEntity(
           adGroup,
           adGroupPerformance[adGroup.getId()],
-          audienceMapping
+          audienceMapping,
+          "Ad Group"
         );
 
         operations = operations.concat(operationsFromAdGroup);
@@ -171,9 +174,9 @@ function filterEntitiesBasedOnDateAndImpressions(selector) {
     .withCondition('Impressions > ' + String(MINIMUM_IMPRESSIONS));
 }
 
-function makeOperationsFromEntity(entity, entityCpa, audienceMapping) {
+function makeOperationsFromEntity(entity, entityCpa, audienceMapping, levelApplyingAt) {
   var entityAudiences = getAudiencesFromEntity(entity, audienceMapping);
-  return makeOperations(entityCpa, entityAudiences);
+  return makeOperations(entityCpa, entityAudiences, entity.getName(), levelApplyingAt);
 }
 
 function getAudiencesFromEntity(entity, audienceMapping) {
@@ -201,7 +204,7 @@ function isAudienceInMarketAudience(audience, inMarketIds) {
   return inMarketIds.indexOf(audience.getAudienceId()) > -1;
 }
 
-function makeOperations(entityCpa, audiences) {
+function makeOperations(entityCpa, audiences, entityName, entityType) {
   var operations = [];
   audiences.forEach(function (audience) {
     var stats = audience.getStatsFor(DATE_RANGE);
@@ -210,10 +213,14 @@ function makeOperations(entityCpa, audiences) {
       var audienceCpa = stats.getCost() / stats.getConversions();
       entityCpa = parseFloat(entityCpa);
       var modifier = (entityCpa / audienceCpa);
+      // Google enforces minimum bid of -90% aka *0.1
+      if(modifier < 0.1) modifier = 0.1;
 
       var operation = {};
       operation.audience = audience;
       operation.modifier = modifier;
+      operation.entityName = entityName;
+      operation.entityType = entityType;
 
       operations.push(operation);
     }
@@ -232,8 +239,11 @@ function campaignHasAnyCampaignLevelAudiences(campaign) {
   return totalNumEntities > 0;
 }
 
-function applyBids(operations) {
+function applyBids(operations, audienceMapping) {
   operations.forEach(function (operation) {
+    Logger.log(" - Updating " + operation.entityType + ": '" + operation.entityName + "'; ");
+    Logger.log("     - Audience: '" + audienceMapping[operation.audience.getAudienceId()] + "' ");
+    Logger.log("     - New Modifier: " + operation.modifier);
     operation.audience.bidding().setBidModifier(operation.modifier);
   });
 }
