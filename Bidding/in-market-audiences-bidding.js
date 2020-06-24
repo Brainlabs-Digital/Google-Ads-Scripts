@@ -241,10 +241,9 @@ function campaignHasAnyCampaignLevelAudiences(campaign) {
 
 function applyBids(operations, audienceMapping) {
   operations.forEach(function (operation) {
-    message = " - Updating " + operation.entityType + ": '" + operation.entityName + "'; "
-    message += "Audience: '" + audienceMapping[operation.audience.getAudienceId()] + "' "
-    message += "New Modifier: " + operation.modifier
-    Logger.log(message);
+    Logger.log(" - Updating " + operation.entityType + ": '" + operation.entityName + "'; ");
+    Logger.log("     - Audience: '" + audienceMapping[operation.audience.getAudienceId()] + "' ");
+    Logger.log("     - New Modifier: " + operation.modifier);
     operation.audience.bidding().setBidModifier(operation.modifier);
   });
 }
