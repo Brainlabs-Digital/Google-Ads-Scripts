@@ -89,7 +89,7 @@ function getAdGroupPerformance() {
 
 function getEntityPerformance(entityIdFieldName, reportName) {
   var performance = {};
-  var query = "SELECT " + entityIdFieldName + ", CostPerAllConversion " +
+  var query = "SELECT " + entityIdFieldName + ", CostPerConversion " +
     "FROM " + reportName + " " +
     "WHERE Impressions > " + String(MINIMUM_IMPRESSIONS) + " " +
     "DURING " + DATE_RANGE;
@@ -97,7 +97,7 @@ function getEntityPerformance(entityIdFieldName, reportName) {
 
   while (rows.hasNext()) {
     var row = rows.next();
-    performance[row[entityIdFieldName]] = row.CostPerAllConversion;
+    performance[row[entityIdFieldName]] = row.CostPerConversion;
   }
   return performance;
 }
