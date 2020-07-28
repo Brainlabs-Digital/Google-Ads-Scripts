@@ -206,12 +206,13 @@ function isAudienceInMarketAudience(audience, inMarketIds) {
 
 function makeOperations(entityCpa, audiences, entityName, entityType) {
   var operations = [];
+  entityCpa = parseFloat(entityCpa.replace(",", ""));
+
   audiences.forEach(function (audience) {
     var stats = audience.getStatsFor(DATE_RANGE);
     var conversions = stats.getConversions();
     if (conversions > 0) {
       var audienceCpa = stats.getCost() / stats.getConversions();
-      entityCpa = parseFloat(entityCpa);
       var modifier = (entityCpa / audienceCpa);
       // Google enforces minimum bid of -90% aka *0.1
       if(modifier < 0.1) modifier = 0.1;
