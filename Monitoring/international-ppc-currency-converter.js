@@ -1,3 +1,4 @@
+// ID: 6ebc498a9290007f5e794c8f73fe7009
 /**
  * A simple script to provide you with conversion rates.
  * You need an an API Key from https://fixer.io/product.
