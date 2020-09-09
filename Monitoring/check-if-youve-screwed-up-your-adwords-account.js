@@ -1,3 +1,4 @@
+// ID: b56487c96aacf454b27b15e1fb427abe
 /**
  *
  * AdWords Script for keyword and ad checking.
