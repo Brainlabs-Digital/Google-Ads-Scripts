@@ -1,3 +1,4 @@
+// ID: 9b05c474b4ffe66abe52091ac4a9f9fb
 /**
 *
 * AdWords Script to check the number of entities in ad groups: reports ad
