@@ -1,3 +1,4 @@
+// ID: ff8f0d610f23882e8e708d497707d4a9
 /**
  *
  * AdWords Script for checking the contents of landing pages.
