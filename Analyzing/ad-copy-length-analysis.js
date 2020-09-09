@@ -5,7 +5,7 @@
  * Download an ad performance report for the account and break up the
  * information and aggregate by component lengths. This will create a sheet for
  * Headline1, Headline2, Headline3, Description1, Description2, Path1, Path2
- * and Headline/Description/Path, which concatenates the respective components.
+ * and Headline/Description/Path, which concatenates the respective components. JF Test.
  *
  * Google Ads Script
  * @author Brainlabs
