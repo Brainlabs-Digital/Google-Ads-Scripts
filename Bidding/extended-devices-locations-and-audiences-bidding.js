@@ -6,7 +6,7 @@
 * Automatically apply modifiers to your devices, locations, in-market and remarketing audiences based on performance.
 * It analyses search and display campaigns only.
 *
-* Version: 1.0
+* Version: 1.1
 * Google Ads Script maintained on brainlabsdigital.com
 *
 **/
@@ -62,7 +62,7 @@ var ADGROUP_BID_MODIFIER_WEIGHTS = [
   { "lower": 20, "upper": 100000, "weight": 1 }
 ]
 
-var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = "https://developers.google.com/adwords/api/docs/appendix/in-market_categories.csv";
+var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = "https://developers.google.com/google-ads/api/data/tables/in-market-categories.tsv";
 
 function main() {
   Logger.log("Validating settings...");
@@ -135,7 +135,8 @@ function validateInputs() {
 
 function getInMarketAudienceMapping(downloadCsvUrl) {
   var csv = Utilities.parseCsv(
-    UrlFetchApp.fetch(downloadCsvUrl).getContentText()
+    UrlFetchApp.fetch(downloadCsvUrl).getContentText(),
+    "\t"
   );
 
   var headers = csv[0];
