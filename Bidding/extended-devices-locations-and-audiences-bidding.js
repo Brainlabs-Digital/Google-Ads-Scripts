@@ -51,15 +51,15 @@ var MAX_BID_MODIFIER = 0.4; // +40%
 // E.g. if there are 15 conversions through a tablet device over the defined time period DATE_RANGE
 // the bid modifier weighted down by multiplying it by 0.8
 var CAMPAIGN_BID_MODIFIER_WEIGHTS = [
-  {"lower": 0, "upper": 10, "weight": 0.6},
-  {"lower": 10, "upper": 20, "weight": 0.8},
-  {"lower": 20, "upper": 100000, "weight": 1}
+  { "lower": 0, "upper": 10, "weight": 0.6 },
+  { "lower": 10, "upper": 20, "weight": 0.8 },
+  { "lower": 20, "upper": 100000, "weight": 1 }
 ]
 
 var ADGROUP_BID_MODIFIER_WEIGHTS = [
-  {"lower": 0, "upper": 10, "weight": 0.6},
-  {"lower": 10, "upper": 20, "weight": 0.8},
-  {"lower": 20, "upper": 100000, "weight": 1}
+  { "lower": 0, "upper": 10, "weight": 0.6 },
+  { "lower": 10, "upper": 20, "weight": 0.8 },
+  { "lower": 20, "upper": 100000, "weight": 1 }
 ]
 
 var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = "https://developers.google.com/adwords/api/docs/appendix/in-market_categories.csv";
@@ -88,45 +88,45 @@ function main() {
 }
 
 function validateInputs() {
-  if ((typeof(DO_DEVICES) != "boolean") ||
-      (typeof(DO_LOCATIONS) != "boolean") ||
-      (typeof(DO_IN_MARKET_AUDIENCES) != "boolean") ||
-      (typeof(DO_OTHER_AUDIENCES) != "boolean")) {
-    throw("DO_DEVICES, DO_LOCATION, DO_IN_MARKET_AUDIENCES and DO_OTHER_AUDIENCES " +
+  if ((typeof (DO_DEVICES) != "boolean") ||
+    (typeof (DO_LOCATIONS) != "boolean") ||
+    (typeof (DO_IN_MARKET_AUDIENCES) != "boolean") ||
+    (typeof (DO_OTHER_AUDIENCES) != "boolean")) {
+    throw ("DO_DEVICES, DO_LOCATION, DO_IN_MARKET_AUDIENCES and DO_OTHER_AUDIENCES " +
       "variables must be set to either true or false.");
   }
 
-  if ((typeof(MINIMUM_IMPRESSIONS) != "number") ||
-      (typeof(MINIMUM_CONVERSIONS) != "number") ||
-      (typeof(MINIMUM_COST) != "number")) {
-    throw("MINIMUM_IMPRESSIONS, MINIMUM_CONVERSIONS, MINIMUM_COST must be a number, e.g. 0, 1, 15");
+  if ((typeof (MINIMUM_IMPRESSIONS) != "number") ||
+    (typeof (MINIMUM_CONVERSIONS) != "number") ||
+    (typeof (MINIMUM_COST) != "number")) {
+    throw ("MINIMUM_IMPRESSIONS, MINIMUM_CONVERSIONS, MINIMUM_COST must be a number, e.g. 0, 1, 15");
   }
 
-  if ((typeof(MIN_BID_MODIFIER) != "number") ||
-      (MIN_BID_MODIFIER < -0.9) ||
-      (MIN_BID_MODIFIER > 0)) {
-    throw("MIN_BID_MODIFIER must be a number between -0.9 and 0, e.g. -0.85, -0.6, -0.3");
+  if ((typeof (MIN_BID_MODIFIER) != "number") ||
+    (MIN_BID_MODIFIER < -0.9) ||
+    (MIN_BID_MODIFIER > 0)) {
+    throw ("MIN_BID_MODIFIER must be a number between -0.9 and 0, e.g. -0.85, -0.6, -0.3");
   }
 
-  if ((typeof(MAX_BID_MODIFIER) != "number") ||
-      (MAX_BID_MODIFIER < 0) ||
-      (MAX_BID_MODIFIER > 9)) {
-    throw("MAX_BID_MODIFIER must be a number between 0 and 9.0, e.g. 0.6, 1.4, 2.7");
+  if ((typeof (MAX_BID_MODIFIER) != "number") ||
+    (MAX_BID_MODIFIER < 0) ||
+    (MAX_BID_MODIFIER > 9)) {
+    throw ("MAX_BID_MODIFIER must be a number between 0 and 9.0, e.g. 0.6, 1.4, 2.7");
   }
 
   var weights = [CAMPAIGN_BID_MODIFIER_WEIGHTS, ADGROUP_BID_MODIFIER_WEIGHTS];
-  weights.forEach(function(entityWeights) {
-    entityWeights.forEach(function(row) {
+  weights.forEach(function (entityWeights) {
+    entityWeights.forEach(function (row) {
       var keys = ["lower", "upper", "weight"];
       if (Object.keys(row).toString() !== keys.toString()) {
-        throw("CAMPAIGN_BID_MODIFIER_WEIGHTS and AD_GROUP_BID_MODIFIER_WEIGHTS " +
+        throw ("CAMPAIGN_BID_MODIFIER_WEIGHTS and AD_GROUP_BID_MODIFIER_WEIGHTS " +
           "rows must be in the following format: " +
           "{\"lower\": number, \"upper\": number, \"weight\": number}");
       }
 
-      keys.forEach(function(key) {
-        if (typeof(row[key]) !== "number") {
-          throw("\"" + key + "\" value in bid modifiers weights must be a number, e.g. 1, 5, 15");
+      keys.forEach(function (key) {
+        if (typeof (row[key]) !== "number") {
+          throw ("\"" + key + "\" value in bid modifiers weights must be a number, e.g. 1, 5, 15");
         }
       });
     });
@@ -166,18 +166,18 @@ function getAdGroupPerformance() {
 function getEntityPerformance(entityIdFieldName, reportName) {
   var performance = {};
   var query = "SELECT " + entityIdFieldName + ", CostPerAllConversion " +
-      "FROM " + reportName + " " +
-      "WHERE Impressions > " + String(MINIMUM_IMPRESSIONS) + " " +
-      "AND Conversions > " + String(MINIMUM_CONVERSIONS) + " " +
-      "AND Cost > " + String(MINIMUM_COST) + " "
+    "FROM " + reportName + " " +
+    "WHERE Impressions > " + String(MINIMUM_IMPRESSIONS) + " " +
+    "AND Conversions > " + String(MINIMUM_CONVERSIONS) + " " +
+    "AND Cost > " + String(MINIMUM_COST) + " "
 
-  CAMPAIGN_NAME_DOES_NOT_CONTAIN.forEach(function(part) {
-      query += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '"
-      + part.replace(/"/g,'\\\"') + "' "
+  CAMPAIGN_NAME_DOES_NOT_CONTAIN.forEach(function (part) {
+    query += "AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE '"
+      + part.replace(/"/g, '\\\"') + "' "
   });
-  CAMPAIGN_NAME_CONTAINS.forEach(function(part) {
-      query += "AND CampaignName CONTAINS_IGNORE_CASE '"
-      + part.replace(/"/g,'\\\"') + "' "
+  CAMPAIGN_NAME_CONTAINS.forEach(function (part) {
+    query += "AND CampaignName CONTAINS_IGNORE_CASE '"
+      + part.replace(/"/g, '\\\"') + "' "
   });
 
   query += "DURING " + DATE_RANGE;
@@ -327,10 +327,10 @@ function makeAllAudiencesOperations(campaign, campaignCpa, adGroupPerformance, a
 
 function campaignHasAnyCampaignLevelAudiences(campaign) {
   var totalNumEntities = campaign
-  .targeting()
-  .audiences()
-  .get()
-  .totalNumEntities();
+    .targeting()
+    .audiences()
+    .get()
+    .totalNumEntities();
 
   return totalNumEntities > 0;
 }
@@ -394,7 +394,7 @@ function makeEntityAudiencesOperations(entity, entityCpa, audiences) {
 function makeAudiencesOperations(entity, entityCpa, audiences) {
   operations = [];
 
-  audiences.forEach(function(audience) {
+  audiences.forEach(function (audience) {
     var operation = makeOperation(entity, entityCpa, audience);
     if (operation) {
       operations.push(operation);
@@ -459,13 +459,13 @@ function ensureWithinBounds(modifier) {
 }
 
 function applyDevicesAndLocationsBids(operations) {
-  operations.forEach(function(operation) {
+  operations.forEach(function (operation) {
     operation.targetingEntity.setBidModifier(operation.modifier);
   });
 }
 
 function applyAudiencesBids(operations) {
-  operations.forEach(function(operation) {
+  operations.forEach(function (operation) {
     operation.targetingEntity.bidding().setBidModifier(operation.modifier);
   });
 }
