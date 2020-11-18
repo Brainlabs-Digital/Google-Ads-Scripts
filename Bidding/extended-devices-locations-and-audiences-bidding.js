@@ -437,7 +437,8 @@ function getBidModifierWeight(conversions, entityType) {
   }
 
   var weight = 1;
-  for each (var weightRange in weights) {
+  for (var index in weights) {
+    var weightRange = weights[index];
     if ((conversions >= weightRange["lower"]) &&
       (conversions < weightRange["upper"])) {
       weight = weightRange["weight"];
