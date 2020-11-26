@@ -1,2 +1,36 @@
-meta:
-  ignore: true
+name: Google Ads Scripts
+
+status: active
+
+ownership:
+  owner: ellen
+  maintainers:
+    - ellen
+
+public-info:
+  reach: general-client-tool
+  release-date: 2012-01-01
+  tags:
+    - audiences
+    - bidding
+    - managing
+    - monitoring
+  departments:
+    - Biddable/Search
+  platforms:
+    - google-ads
+  documentation:
+    wiki:
+      -
+    cards:
+      -
+    spreadsheets:
+      -
+    docs:
+      -
+
+tech-info:
+  trackable: false
+
+deployments:
+  - type: user-managed-google-ads-script
