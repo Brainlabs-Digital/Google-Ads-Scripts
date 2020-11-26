@@ -5,7 +5,7 @@
 *
 * Automatically apply modifiers to your in-market audiences based on performance.
 *
-* Version: 1.0
+* Version: 1.1
 * Google AdWords Script maintained on brainlabsdigital.com
 *
 **/
@@ -33,7 +33,7 @@ var CAMPAIGN_NAME_DOES_NOT_CONTAIN = [];
 // Leave as [] to include all campaigns.
 var CAMPAIGN_NAME_CONTAINS = [];
 
-var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = 'https://developers.google.com/adwords/api/docs/appendix/in-market-categories.tsv';
+var AUDIENCE_MAPPING_CSV_DOWNLOAD_URL = 'https://developers.google.com/google-ads/api/data/tables/in-market-categories.tsv';
 
 function main() {
   Logger.log('Getting audience mapping');
@@ -216,7 +216,7 @@ function makeOperations(entityCpa, audiences, entityName, entityType) {
       var audienceCpa = stats.getCost() / stats.getConversions();
       var modifier = (entityCpa / audienceCpa);
       // Google enforces minimum bid of -90% aka *0.1
-      if(modifier < 0.1) modifier = 0.1;
+      if (modifier < 0.1) modifier = 0.1;
 
       var operation = {};
       operation.audience = audience;
