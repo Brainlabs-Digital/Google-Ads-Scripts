@@ -69,7 +69,7 @@ function main() {
         product = productStatuses.resources[i];
         if (satisfiesAllFilters(product)) {
           totalProducts += 1;
-          if (product['destinationStatuses'][0]['approvalStatus'] == 'disapproved') {
+          if (product['destinationStatuses'][0]['status'] == 'disapproved') {
             numberDisapprovedProducts++;
           }
         }
