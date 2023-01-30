@@ -133,20 +133,6 @@ function satisfiesIdIncludeFilters(productIdToInclude, product) {
 
 function satisfiesIdExcludeFilters(productIdToExclude, product) {
   if (productIdToExclude.length) {
-    for (index = 0; index < productIdToExclude.length; ++index) {
-      if (product['productId'].indexOf(productIdToExclude[index]) == -1) {
-        return true;
-      }
-    }
-    return false;
-  }
-  else {
-    return true;
-  }
-}
-
-function satisfiesIdExcludeFilters(productIdToExclude, product) {
-  if (productIdToExclude.length) {
     for (var index = 0; index < productIdToExclude.length; ++index) {
       // If the product is in the list of things to exclude, then does not satisfy filters
       if (product['productId'].indexOf(productIdToExclude[index]) !== -1) {
