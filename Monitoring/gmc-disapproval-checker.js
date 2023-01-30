@@ -145,3 +145,18 @@ function satisfiesIdExcludeFilters(productIdToExclude, product) {
   }
 }
 
+function satisfiesIdExcludeFilters(productIdToExclude, product) {
+  if (productIdToExclude.length) {
+    for (var index = 0; index < productIdToExclude.length; ++index) {
+      // If the product is in the list of things to exclude, then does not satisfy filters
+      if (product['productId'].indexOf(productIdToExclude[index]) !== -1) {
+        return false;
+      }
+    }
+    // Have checked the product against all the ids to exclude and it wasn't in there
+    return true;
+  }
+  else {
+    return true;
+  }
+}
