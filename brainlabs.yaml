@@ -1,3 +1,4 @@
+version: v1
 name: Google Ads Scripts
 
 description: A variety of Google Ads scripts released on the Brainlabs and other blog sites, with a variety of purposes.
@@ -8,6 +9,9 @@ ownership:
   owner: ellen
   maintainers:
     - ellen
+
+apis:
+  - 
 
 public-info:
   reach: general-client-tool
